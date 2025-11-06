@@ -1,0 +1,54 @@
+:root{
+  --bg: #FFFBF4;
+  --border: #e9e1d5;
+  --focus: #3b82f6;
+  --red: #d31111;
+  --red-btn: #e34a42;
+  --red-btn-hover: #c83a33;
+}
+
+.signup{
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--bg);
+  padding: 40px 16px;
+}
+.signup__card{ width: min(460px, 92vw); text-align: center; }
+.signup__logo{ width: 72px; height: 72px; object-fit: contain; display:block; margin: 0 auto 8px; }
+.signup__title{ margin: 0 0 12px; color: var(--red); font-weight: 700; }
+.signup__form{ display: grid; gap: 12px; margin-top: 8px; }
+
+.field{
+  display: grid;
+  grid-template-columns: 28px 1fr 32px;
+  align-items: center; gap: 6px;
+  border: 1px solid var(--border);
+  background: #fff; border-radius: 999px; padding: 6px 10px 6px 8px;
+}
+.field:focus-within{ box-shadow: 0 0 0 3px rgba(59,130,246,.25); border-color: var(--focus); }
+.field input{ border: none; outline: none; font-size: 14px; background: transparent; }
+.field__icon{ font-size: 16px; opacity: .7; }
+.field__suffix{ border: none; background: transparent; cursor: pointer; font-size: 16px; }
+
+.agree{
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px; justify-content: center;
+}
+.agree a{ color: var(--red-btn); text-decoration: none; }
+.agree a:hover{ text-decoration: underline; }
+
+.signup__btn{
+  border: none; background: var(--red-btn); color: #fff; font-weight: 700;
+  padding: 10px 18px; border-radius: 999px; cursor: pointer;
+}
+.signup__btn:hover{ background: var(--red-btn-hover); }
+
+.signup__hint{ margin-top: 12px; font-size: 14px; }
+.signup__hint a{ color: var(--red-btn); text-decoration: none; }
+.signup__hint a:hover{ text-decoration: underline; }
+
+.signup__error{
+  color: #b00020; background: #fde7ea; border: 1px solid #f8c7cf;
+  padding: 8px 10px; border-radius: 10px; font-size: 14px;
+}

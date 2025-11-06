@@ -1,0 +1,63 @@
+/* 1) Reset nhẹ & hộp tính kích thước dễ kiểm soát */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* 2) Cơ bản cho trang */
+body {
+  margin: 0;                                /* bỏ margin mặc định */
+  font-family: system-ui, Arial, sans-serif;/* font dễ đọc, có fallback */
+  line-height: 1.5;                         /* khoảng cách dòng thoáng */
+  color: #213547;                           /* màu chữ tối, dễ đọc */
+  background: #FFF9EB;                      /* nền sáng đơn giản */
+}
+
+/* 3) Ảnh responsive: không tràn khỏi khung chứa */
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* 4) Container trung tâm, rộng tối đa 1120px */
+.container {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+/* 5) Liên kết: màu dễ thấy, underline khi hover/focus */
+a {
+  color: #1a73e8;
+  text-decoration: none;
+}
+a:hover,
+a:focus-visible {
+  text-decoration: underline;
+}
+
+/* 6) Tiêu đề chính hay dùng */
+h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin: 0.5rem 0;
+}
+
+/* 7) Nút cơ bản + trạng thái focus thân thiện */
+button {
+  font: inherit;                 /* dùng cùng font với body */
+  padding: 0.6em 1em;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  background: #f6f8fa;
+  cursor: pointer;
+}
+button:hover {
+  background: #eef2f6;
+}
+button:focus-visible {
+  outline: 2px solid #1a73e8;
+  outline-offset: 2px;
+}

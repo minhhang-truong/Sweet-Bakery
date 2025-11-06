@@ -1,0 +1,169 @@
+/* ============ 1) MÀU & BIẾN CƠ BẢN (dễ chỉnh) ============ */
+:root{
+  --bg-cream: #FEF7EA;
+  --pink:       #f59cab;
+  --pink-strong:#f07a86;
+  --text:       #000000;
+  --muted:      #6b6b6b;
+
+  --white: #fff;
+  --line:  #e8e2d7;
+
+  --radius: 12px;          /* bo góc mềm, dễ nhìn */
+  --radius-round: 999px;   /* bo tròn viên thuốc */
+  --gap-sm: 8px;
+  --gap-md: 16px;
+  --gap-lg: 24px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.06);
+}
+
+/* ============ 2) KHỐI HEADER CHUNG ============ */
+.hdr{
+  background: var(--bg-cream);
+  color: var(--text);
+  width: 100%;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Hàng trên: logo + ô tìm kiếm + theo dõi + actions
+   Dùng flex cho dễ hiểu, tự xuống hàng khi hẹp */
+.hdr__top{
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  flex-wrap: wrap;            /* nhỏ thì tự xuống hàng */
+}
+
+
+.hdr__brand img{
+  height: 120px;
+  width: auto;
+  display: block;
+}
+
+/* ============ 3) Ô TÌM KIẾM / TRA CỨU (dùng chung style) ============ */
+.hdr__search,
+.hdr__track{
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  border: 1px solid #6F6F6F;
+  padding: 8px 10px;
+  border-radius: var(--radius-round);
+  min-width: 220px;               /* đừng quá nhỏ */
+  flex: 1 1 260px;                /* co giãn hợp lý */
+}
+
+.hdr__search input,
+.hdr__track input{
+  width: 100%;
+  border: 0;
+  outline: 0;
+  font-size: 14px;
+  background: transparent;
+  color: var(--text);
+}
+
+.hdr__search button,
+.hdr__track button{
+  border: 0;
+  background: #eee8dd;
+  border-radius: 50%;
+  width: 32px; height: 32px;
+  cursor: pointer;
+  transition: filter .2s ease;
+}
+.hdr__search button:hover,
+.hdr__track button:hover{
+  filter: brightness(0.95);
+}
+.hdr__search button:focus-visible,
+.hdr__track button:focus-visible{
+  outline: 2px solid var(--pink-strong);
+  outline-offset: 2px;
+}
+
+/* ============ 4) KHU ACTIONS (đăng nhập, giỏ, v.v.) ============ */
+.hdr__actions{
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  margin-left: auto;              /* đẩy sang phải */
+  flex-wrap: wrap;
+}
+
+.hdr__actions a,
+.hdr__actions .linklike{
+  color: var(--text);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color .2s ease;
+}
+.hdr__actions a:hover,
+.hdr__actions .linklike:hover{
+  color: var(--muted);
+}
+
+.icon-btn{
+  border: 1px solid #ddd;
+  background: var(--white);
+  border-radius: 50%;
+  width: 36px; height: 36px;
+  cursor: pointer;
+  display: inline-grid;
+  place-items: center;
+  transition: background .2s ease, border-color .2s ease;
+}
+.icon-btn:hover{
+  background: #f2f4f7;
+  border-color: #ccc;
+}
+.icon-btn:focus-visible{
+  outline: 2px solid var(--pink-strong);
+  outline-offset: 2px;
+}
+
+/* ============ 5) THANH DANH MỤC MÀU HỒNG ============ */
+.hdr__cats{
+  background: #FF8F91;
+}
+.hdr__cats__inner{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 80px;
+  padding: 10px 0px;
+  overflow-x: auto;               /* nhiều mục thì kéo ngang */
+  scrollbar-width: thin;
+}
+.hdr__cats__inner .cat{
+  color: #BC0000;                 /* chữ hồng đậm */
+  text-decoration: none;
+  font-weight: 600;
+  white-space: nowrap;            /* không xuống dòng giữa chừng */
+  transition: color .2s ease;
+}
+.hdr__cats__inner .cat:hover{
+  color: #4a0f0f;
+}
+.hdr__cats__inner .cat.active{
+  color: #3b0b0b;
+}
+
+/* ============ 6) RESPONSIVE ĐƠN GIẢN ============ */
+/* Tablet */
+@media (max-width: 1024px){
+  .hdr__top{
+    gap: var(--gap-sm);
+  }
+  .hdr__brand img{
+    height: 46px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 640px){
+  .hdr__top{
+    padding: 12px var(--gap-md);
+  }
+}
