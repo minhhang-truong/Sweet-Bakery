@@ -2,11 +2,11 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import HomePage from "./pages/HomePage.jsx";
 import AllMenu from "./pages/AllMenu.jsx";
-import SignIn from "./pages/SignIn.jsx";
-import SignUp from "./pages/SignUp.jsx";
+import SignIn from "./pages/Login/SignIn.jsx";
+import SignUp from "./pages/Signup/SignUp.jsx";
 import Cart from "./pages/Cart.jsx";
 import Checkout from "./pages/Checkout.jsx";
-import Account from "./pages/Account.jsx";
+import Account from "./pages/Account/Account.jsx";
 
 const router = createBrowserRouter([
   { path: "/", element: <HomePage /> },

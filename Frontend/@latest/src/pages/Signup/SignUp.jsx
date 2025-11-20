@@ -1,6 +1,8 @@
 import "./SignUp.css";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export default function SignUp() {
   const [name, setName] = useState("");
@@ -13,7 +15,7 @@ export default function SignUp() {
   const [err, setErr] = useState("");
   const navigate = useNavigate();
 
-  function onSubmit(e) {
+  async function onSubmit(e) {
     e.preventDefault();
     setErr("");
 
@@ -34,7 +36,20 @@ export default function SignUp() {
       return;
     }
     // TODO: call API signup here
-    navigate("/signin"); // sau khi đăng ký mock, chuyển sang Sign in
+     try {
+      const res = await axios.post(`${API_URL}/auth/signup`, {
+        email,
+        password: pw,
+        name,
+      });
+
+      console.log("Signup success:", res.data);
+
+      navigate("/signin"); // sau khi đăng ký mock, chuyển sang Sign in
+    } catch (err) {
+      console.error("Signup failed:", err.response?.data || err.message);
+      setErr(err.response?.data?.error || "Signup failed");
+    }
   }
 
   return (

@@ -2,9 +2,21 @@ import "./Cart.css";
 import { useCart } from "../context/CartContext.jsx";
 import { formatVND } from "../lib/money";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
+import { useNavigate } from "react-router-dom";
 
 export default function Cart() {
   const cart = useCart();
+  const auth = useAuth();
+  const nav = useNavigate();
+
+  function handleCheckout() {
+    if (!auth.isAuthed) {
+      nav("/signin?redirect=checkout"); // quay lại checkout sau khi login
+      return;
+    }
+    nav("/checkout");
+  }
 
   if (cart.items.length === 0) {
     return (
@@ -58,7 +70,7 @@ export default function Cart() {
           {/* sau này thêm ship/discount ở đây */}
           <div className="cart__actions">
             <Link to="/menu" className="cart__back">← Continue shopping</Link>
-            <Link to="/checkout"><button className="cart__checkout">Proceed to checkout</button></Link>
+            <button className="cart__checkout" onClick={handleCheckout}>Proceed to checkout</button>
           </div>
         </div>
       </div>

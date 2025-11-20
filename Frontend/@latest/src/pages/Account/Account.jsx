@@ -1,28 +1,61 @@
 import "./Account.css";
 import { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export default function Account() {
   const auth = useAuth();
   const nav = useNavigate();
 
   // Nếu chưa đăng nhập → về /signin
-  useEffect(() => { if (!auth.isAuthed) nav("/signin"); }, [auth.isAuthed, nav]);
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`${API_URL}/auth/${auth.user.id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        // cập nhật form bằng dữ liệu từ DB
+        setForm({
+          name: res.data.fullname,
+          email: res.data.email,
+          phone: res.data.phone || "",
+          address: res.data.address || "",
+        });
+
+      } catch (error) {
+        console.error("Failed to load user:", error);
+      }
+    }
+
+    if (auth.isAuthed) {
+      fetchProfile();
+    }
+  }, [auth.isAuthed]);
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+  });
+
+  async function submit(e) {
+    e.preventDefault();
+    await auth.updateProfile(form);
+  }
 
   if (!auth.isAuthed) return null;
 
-  const [form, setForm] = useState({
-    name: auth.user.name || "",
-    email: auth.user.email || "",
-    phone: auth.user.phone || "",
-    address: auth.user.address || "",
-  });
-
-  function submit(e) {
-    e.preventDefault();
-    auth.updateProfile(form);
-    alert("Profile updated!");
+  function handleLogout() {
+    auth.logout();
+    nav("/");
   }
 
   return (
@@ -53,7 +86,7 @@ export default function Account() {
 
               <div className="acc__actions">
                 <button type="submit" className="acc__btn">Save changes</button>
-                <button type="button" className="acc__btnOutline" onClick={auth.logout}>Sign out</button>
+                <button type="button" className="acc__btnOutline" onClick={handleLogout}>Sign out</button>
               </div>
             </form>
           </section>

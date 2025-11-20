@@ -1,7 +1,9 @@
 import "./SignIn.css";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.jsx";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext.jsx";
+import axios from "axios";
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -10,8 +12,11 @@ export default function SignIn() {
   const [err, setErr] = useState("");
   const auth = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  function onSubmit(e) {
+  const redirect = new URLSearchParams(location.search).get("redirect");
+
+  async function onSubmit(e) {
     e.preventDefault();
     setErr("");
 
@@ -21,9 +26,28 @@ export default function SignIn() {
       return;
     }
     // TODO: gọi API thật ở đây
-    // giả sử đăng nhập OK:
-    auth.login ({email});
-    navigate("/"); // quay lại Home
+    console.log(API_URL)
+    try {
+      const res = await axios.post(`${API_URL}/auth/signin`, {
+        email: email,
+        password: pw,
+      });
+
+      console.log("Login success:", res.data);
+      localStorage.setItem("token", res.data.token); // Save JWT token
+      const id = res.data.user.id;
+      const name = res.data.user.name;
+      auth.login ({id, email, name});
+      navigate(redirect ? `/${redirect}` : "/");
+    } catch (err) {
+      if (err.response) {
+        // Response came from backend with an error message
+        setErr(err.response.data.error || "Login failed");
+      } else {
+        // Network or unexpected error
+        setErr("Unable to connect to server");
+      }
+    }
   }
 
   return (
