@@ -23,21 +23,21 @@ export function AuthProvider({ children }) {
     user,
     isAuthed: !!user,
 
-    login({ id, email, name}) {
+    login(user) {
       // mock: nếu chưa có name, suy từ email
-      const displayName = name.split(" ")[0];
-      setUser({ id, email, name: displayName});
+      setUser(user);
+      user.name = user.fullname.split(" ")[0];
     },
-    logout() {
+    async logout() {
+      await axios.post(`${API_URL}/auth/logout`,{}, { withCredentials: true });
       setUser(null);
-      localStorage.removeItem("token");
     },
 
     async updateProfile(patch) {
       if (!user) return;
       try {
         const res = await axios.put(`${API_URL}/auth/${user.id}`, patch, {
-          headers: { Authorization: `Bearer ${user.token}` }
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         });
         setUser(prev => ({ ...prev, ...res.data }));
         alert("Profile updated successfully!");

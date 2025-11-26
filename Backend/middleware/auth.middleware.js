@@ -1,15 +1,18 @@
 const jwt = require("jsonwebtoken");
 
 function verifyToken(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ error: "No token provided" });
+  const token = req.cookies.token;
+  if (!token) {
+      return res.status(401).json({ message: "No token" });
+  }
 
-  const token = authHeader.split(" ")[1];
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) return res.status(403).json({ error: "Invalid token" });
-    req.user = decoded; // attach decoded info (like user id) to request
-    next();
-  });
+  try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = decoded;   // gắn user vào req để các route phía sau dùng
+      next();
+  } catch (error) {
+      return res.status(401).json({ message: "Invalid token" });
+  }
 }
 
 module.exports = verifyToken;

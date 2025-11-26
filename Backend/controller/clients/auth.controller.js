@@ -14,11 +14,22 @@ module.exports.signin = async (req, res) => {
         const match = await bcrypt.compare(password, user.password);
         if (!match) return res.status(401).json({ error: 'Invalid password' });
 
-        const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
-        expiresIn: '1h',
+        const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, process.env.JWT_SECRET, {
+        expiresIn: '3h',
         });
 
-        res.json({ message: 'Login successful', token, user: { id: user.id, email: user.email, name: user.fullname } });
+        res.cookie("token", token, {
+          httpOnly: true,
+          secure: false,
+          sameSite: "strict"
+        });
+
+        res.json({ message: 'Login successful', user: {
+          id: user.id,
+          role: user.role,
+          email: user.email,
+          fullname: user.fullname,
+        } });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -40,11 +51,17 @@ module.exports.signup = async(req, res) => {
       return res.status(400).json({ error: 'User already exists' });
     }
 
+    await Account.transaction(true);
+
     // Mã hóa mật khẩu
     req.body.password = await bcrypt.hash(password, 10);
 
     // Lưu user mới vào DB
     const result = await Account.signUp(req.body);
+    result.name = name;
+
+    await Account.addCus(result);
+    await Account.transaction(false);
 
     // Tạo JWT token
     // const token = jwt.sign(
@@ -72,6 +89,7 @@ module.exports.updateUser = async(req, res) => {
     email: req.body.email,
     id: userId,
     phone: req.body.phone,
+    address: req.body.address,
   }
   if (req.user.id != id) {
     return res.status(403).json({ error: "You can only update your own profile" });
@@ -83,7 +101,7 @@ module.exports.updateUser = async(req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.json(result.rows[0]); // send updated user info back to frontend
+    res.json(result); // send updated user info back to frontend
   } catch (err) {
     console.error("Update failed:", err);
     res.status(500).json({ error: "Server error" });
@@ -97,4 +115,13 @@ module.exports.userProfile = async(req, res) => {
 
   const user = await Account.findById(userId);
   res.json(user);
+}
+
+module.exports.logout = async (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: false,
+    sameSite: "strict"
+  });
+  res.json({ message: "Logged out" });
 }

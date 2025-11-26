@@ -1,0 +1,504 @@
+/* ================== BIẾN MÀU CƠ BẢN ================== */
+:root {
+  --cream-bg: #FEF7EA;
+  --pink-bar: #f59cab;
+  --pink-dark: #d94a4a; /* đổi từ hồng sang hồng đỏ */
+  --text-main: #2b2b2b;
+  --muted: #6b6b6b;
+  --beige-input: #f5f0e8;
+  --red-button: #BC0000; /* màu đỏ chính */
+  --red-dark: #C51616; /* đỏ đậm */
+  --green-button: #90ee90;
+  --blue-border: #0066ff;
+}
+
+/* Container trong header có padding */
+.hdr .container {
+  padding-inline: 16px;
+}
+
+/* ================== HEADER TOP (CREAM) ================== */
+
+.hdr {
+  background: var(--cream-bg);
+  color: var(--text-main);
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Hàng trên cùng: logo + search + track + actions */
+.hdr__top {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 18px 0;
+  flex-wrap: wrap;
+}
+
+/* Logo */
+.hdr__brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hdr__brand img {
+  height: 90px;
+  width: auto;
+  display: block;
+  object-fit: contain;
+}
+
+/* Ô search với thiết kế đơn giản, tinh tế */
+.hdr__search {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #ffffff;
+  border-radius: 25px;
+  border: 1px solid #e0d9c8;
+  padding: 0;
+  flex: 1 1 280px;
+  max-width: 320px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hdr__search:focus-within {
+  border-color: #d4c5b0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.hdr__search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+  padding: 12px 18px;
+  color: var(--text-main);
+}
+
+.hdr__search input::placeholder {
+  color: #9b9b9b;
+}
+
+.hdr__search button {
+  border: none;
+  background: #ffffff;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px;
+  font-size: 15px;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+  padding: 0;
+  font: inherit;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.hdr__search button svg {
+  width: 16px;
+  height: 16px;
+  color: var(--pink-dark);
+  stroke: var(--pink-dark);
+}
+
+.hdr__search button:hover {
+  background: #fff9f2;
+}
+
+.hdr__search button:hover svg {
+  color: var(--pink-bar);
+  stroke: var(--pink-bar);
+}
+
+/* Track order với thiết kế tương tự nhưng tinh tế hơn */
+.hdr__track {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: #ffffff;
+  border-radius: 25px;
+  border: 1px solid #d0e8ff;
+  padding: 0;
+  flex: 1 1 260px;
+  max-width: 320px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 102, 255, 0.1);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hdr__track:focus-within {
+  border-color: #8bc5ff;
+  box-shadow: 0 2px 6px rgba(0, 102, 255, 0.15);
+}
+
+.hdr__track input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+  padding: 12px 18px;
+  color: var(--text-main);
+}
+
+.hdr__track input::placeholder {
+  color: #9b9b9b;
+}
+
+.hdr__track button {
+  border: none;
+  background: #ffffff;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 4px;
+  font-size: 15px;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+  padding: 0;
+  font: inherit;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.hdr__track button svg {
+  width: 16px;
+  height: 16px;
+  color: var(--pink-dark);
+  stroke: var(--pink-dark);
+}
+
+.hdr__track button:hover {
+  background: #fff9f2;
+}
+
+.hdr__track button:hover svg {
+  color: var(--pink-bar);
+  stroke: var(--pink-bar);
+}
+
+/* Khu action: sign in / account / cart ... */
+.hdr__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Action item - đơn giản, không quá nổi bật */
+.hdr__action-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none !important;
+  color: var(--text-main);
+  font-size: 14px;
+  padding: 4px 0;
+  transition: color 0.15s ease;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.hdr__action-item:hover {
+  color: var(--pink-dark);
+  text-decoration: none !important;
+}
+
+/* Icon circle - đơn giản, nhỏ gọn */
+.hdr__icon-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffffff;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.hdr__icon-circle svg {
+  width: 16px;
+  height: 16px;
+  color: var(--pink-dark);
+  stroke: var(--pink-dark);
+}
+
+.hdr__action-item:hover .hdr__icon-circle {
+  background: #fef9f2;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.hdr__action-item:hover .hdr__icon-circle svg {
+  color: var(--pink-bar);
+  stroke: var(--pink-bar);
+}
+
+/* Greeting item */
+.hdr__action-item--greeting {
+  color: var(--text-main);
+}
+
+.hdr__action-item--greeting strong {
+  font-weight: 600;
+  color: var(--pink-dark);
+}
+
+.hdr__account {
+  position: relative;
+  z-index: 600;
+}
+.hdr__accountMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #fff;
+  border: 1px solid #e0d9c8;
+  border-radius: 12px;
+  padding: 6px;
+  display: grid;
+  gap: 4px;
+  min-width: 180px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  z-index: 30;
+}
+.hdr__accountMenu button {
+  border: none;
+  background: transparent;
+  padding: 8px 10px;
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text-main);
+}
+.hdr__accountMenu button:hover {
+  background: #fff4f4;
+  color: var(--pink-dark);
+}
+.hdr__accountChevron {
+  font-size: 11px;
+  margin-left: 4px;
+  transition: transform 0.2s ease;
+}
+.hdr__account.open .hdr__accountChevron {
+  transform: rotate(180deg);
+}
+
+/* Cart count */
+.hdr__cart-count {
+  color: var(--pink-dark);
+  font-weight: 600;
+  margin-left: 2px;
+}
+
+/* Icon button (logout) */
+.icon-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+}
+
+.icon-btn:hover {
+  background: transparent;
+}
+
+/* ================== CATEGORY BAR (PINK) ================== */
+
+.hdr__cats {
+  background: var(--pink-bar);
+  position: relative;
+  z-index: 200; /* để dropdown nổi trên Hero */
+}
+
+.hdr__cats__inner {
+  display: flex;
+  gap: 24px;
+  padding: 10px 0;
+  align-items: center;  
+}
+
+/* Bọc mỗi category + dropdown */
+.hdr__catWrap {
+  position: relative;
+}
+
+.hdr__catWrap::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 12px; /* vùng đệm để giữ hover khi di chuyển xuống dropdown */
+}
+
+/* Link category trên thanh hồng */
+.cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #BC0000;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 6px 10px;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+}
+
+.cat:hover {
+  color: #6b0000;
+}
+
+.cat.active {
+  color: #5a0000;
+  font-weight: 700;
+}
+
+.cat__chevron {
+  font-size: 10px;
+  margin-top: 1px;
+  transition: transform 0.15s ease;
+}
+
+/* Xoay mũi tên khi hover */
+.hdr__catWrap:hover .cat__chevron {
+  transform: rotate(180deg);
+}
+
+/* ================== DROPDOWN MENU ================== */
+
+.hdr__dropdown {
+  position: absolute;
+  left: 0;
+  top: 100%;               /* ngay dưới thanh hồng */
+  width: 260px;
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
+
+  background: #54500c;     /* olive đậm giống screenshot bạn gửi */
+  color: #fff;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  padding: 8px 0;
+
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 1000;
+}
+
+/* Hover vào category thì show dropdown */
+.hdr__catWrap:hover .hdr__dropdown {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+/* Item trong dropdown */
+.hdr__dropItem {
+  display: block;
+  padding: 8px 18px;
+  font-size: 15px;
+  color: #fff;
+  text-decoration: none;
+  white-space: nowrap;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.hdr__dropItem:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ================== RESPONSIVE ================== */
+
+@media (max-width: 1024px) {
+  .hdr__top {
+    flex-wrap: wrap;
+  }
+
+  .hdr__search,
+  .hdr__track {
+    max-width: 100%;
+    flex: 1 1 300px;
+  }
+
+  .hdr__actions {
+    width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hdr__top {
+    gap: 12px;
+  }
+
+  .hdr__brand img {
+    height: 75px;
+  }
+
+  .hdr__search,
+  .hdr__track {
+    max-width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .hdr__cats__inner {
+    gap: 16px;
+    overflow-x: auto;
+    padding: 10px 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .hdr__cats__inner::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .hdr__actions {
+    gap: 12px;
+    font-size: 13px;
+  }
+
+  .hdr__actions a,
+  .icon-btn {
+    font-size: 13px;
+  }
+
+  .cat {
+    font-size: 14px;
+    padding: 6px 10px;
+  }
+}

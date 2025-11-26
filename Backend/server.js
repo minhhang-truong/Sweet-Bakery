@@ -22,7 +22,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.use(cookieParser('keyboard cat'));
-app.use(session({cookie: { maxAge: 60000 }}));
+app.use(session({
+    secret: "your-secret-key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        secure: false,   // true if using HTTPS
+        // NOTE: do NOT set maxAge or expires → this makes it a session cookie
+    }
+}));
 app.use(flash());
 app.use((req, res, next) => {
   res.locals.messages = req.flash();

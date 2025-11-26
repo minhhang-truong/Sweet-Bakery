@@ -1,0 +1,71 @@
+.menu { background: #FFFBF4; padding: 56px 0; text-align: center; }
+.menu__title { color: #d94a4a; font-weight: 800; letter-spacing: .04em; margin: 0 0 24px; }
+
+.menu__category { margin: 40px 0 56px; text-align: left; }
+.menu__categoryBar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.menu__categoryTitle { margin: 0; color: #ff4c4c; font-weight: 700; }
+
+.dot { width: 8px; height: 8px; background: #ff4c4c; border-radius: 50%; display: inline-block; }
+
+.menu__grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.menu__card {
+  background: #fff;
+  border: 2px solid #f5d4d4;
+  border-radius: 14px;
+  padding: 14px;
+  display: grid;
+  grid-template-rows: auto auto auto auto;
+  gap: 8px;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.menu__card:hover { transform: translateY(-3px); box-shadow: 0 8px 18px rgba(0,0,0,.06); }
+
+.menu__thumbWrap { position: relative; }
+.menu__badge {
+  position: absolute; top: 10px; left: 10px;
+  background: #d94a4a; color: #fff; font-size: 12px; font-weight: 700;
+  padding: 4px 8px; border-radius: 999px;
+}
+.menu__img {
+  width: 100%; height: 160px; object-fit: cover; border-radius: 10px;
+  background: #f6e6e6; /* fallback khi chưa có ảnh thật */
+}
+
+.menu__name { margin: 4px 0 0; font-weight: 700; color: #d94a4a; font-size: 16px; }
+.menu__price { margin: 0; color: #7a6f69; }
+.menu__btn {
+  justify-self: start;
+  border: none; background: #d94a4a; color: #fff; font-weight: 700;
+  padding: 8px 14px; border-radius: 999px; cursor: pointer;
+  transition: background 0.2s ease;
+}
+.menu__btn:hover { background: #C51616; }
+
+@media (max-width: 560px) {
+  .menu__img { height: 140px; }
+}
+.menu__seeMoreWrap { text-align: center; margin-top: 12px; }
+.menu__seeMore {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: #d94a4a; text-decoration: none; font-weight: 700;
+  padding: 6px 12px; border-radius: 999px;
+}
+.menu__seeMore:hover { background: rgba(217,74,74,.08); }
+.menu__back { color: #d94a4a; text-decoration: none; font-weight: 600; }
+.chev { font-size: 14px; }
+.menu__row { display:flex; gap:8px; }
+.menu__btnSecondary {
+  border: 2px solid #d94a4a; background: #fff; color:#d94a4a;
+  font-weight:700; padding:8px 14px; border-radius:999px; cursor:pointer;
+  transition: background 0.2s ease;
+}
+.menu__btnSecondary:hover { 
+  background: #ffe6e6; 
+  border-color: #C51616;
+  color: #C51616;
+}

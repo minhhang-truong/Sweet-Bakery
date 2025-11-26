@@ -3,13 +3,16 @@ const router = express.Router();
 const verifyToken = require('../../middleware/auth.middleware');
 
 const controller = require("../../controller/clients/auth.controller");
+const { authorize } = require('../../middleware/authorize.middleware');
 
 router.post("/signin", controller.signin);
 
 router.post("/signup", controller.signup);
 
-router.put("/:id", verifyToken, controller.updateUser);
+router.post("/logout", controller.logout);
 
-router.get("/:id", verifyToken, controller.userProfile);
+router.put("/:id", verifyToken, authorize(1), controller.updateUser);
+
+router.get("/:id", verifyToken, authorize(1), controller.userProfile);
 
 module.exports = router;
