@@ -3,7 +3,8 @@
   min-height: 420px;
   display: grid;
   align-items: end;
-  padding-bottom: 40px; /* space above gradient */
+  padding-bottom: 100px; /* space above gradient */
+  padding-left: 120px;
   overflow: clip;
 }
 
@@ -41,12 +42,16 @@
 
 .hero__cta {
   border: none;
-  background: #ff6d6d; /* pinkish red */
+  background: #d94a4a; /* reddish pink */
   color: #fff;
   font-weight: 700;
   padding: 12px 22px;
   border-radius: 999px;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(255,109,109,.25);
+  box-shadow: 0 8px 20px rgba(217,74,74,.3);
+  transition: background 0.2s ease;
 }
-.hero__cta:hover { filter: brightness(0.95); }
+.hero__cta:hover { 
+  background: #C51616;
+  filter: brightness(0.95); 
+}

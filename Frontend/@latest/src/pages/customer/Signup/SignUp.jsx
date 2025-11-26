@@ -2,6 +2,7 @@ import "./SignUp.css";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import logoImg from '../../../assets/images/common/logo-sweet-bakery.png';
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export default function SignUp() {
@@ -55,7 +56,7 @@ export default function SignUp() {
   return (
     <main className="signup">
       <div className="signup__card">
-        <img className="signup__logo" src="/logo.png" alt="Sweet Bakery" />
+        <img className="signup__logo" src={logoImg} alt="Sweet Bakery" />
         <h1 className="signup__title">Sign up</h1>
 
         <form onSubmit={onSubmit} className="signup__form">
@@ -86,31 +87,27 @@ export default function SignUp() {
           <label className="field">
             <span className="field__icon" aria-hidden>🔒</span>
             <input
-              type={show ? "text" : "password"}
+              type="password"
               placeholder="Create a password"
               value={pw}
               onChange={(e) => setPw(e.target.value)}
               required
               minLength={6}
             />
-            <button type="button" className="field__suffix" onClick={() => setShow(s => !s)} aria-label={show ? "Hide password" : "Show password"}>
-              {show ? "🙈" : "👁️"}
-            </button>
+            <span className="field__suffix" />
           </label>
 
           <label className="field">
             <span className="field__icon" aria-hidden>✅</span>
             <input
-              type={show2 ? "text" : "password"}
+              type="password"
               placeholder="Confirm password"
               value={pw2}
               onChange={(e) => setPw2(e.target.value)}
               required
               minLength={6}
             />
-            <button type="button" className="field__suffix" onClick={() => setShow2(s => !s)} aria-label={show2 ? "Hide password" : "Show password"}>
-              {show2 ? "🙈" : "👁️"}
-            </button>
+            <span className="field__suffix" />
           </label>
 
           <label className="agree">

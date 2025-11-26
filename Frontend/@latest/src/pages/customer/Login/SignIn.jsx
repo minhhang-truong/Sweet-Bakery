@@ -41,9 +41,9 @@ export default function SignIn() {
         navigate(`/${redirect}`);
         return;
       }
-      if (res.data.user.role == 2) navigate("/employee");
+      if (res.data.user.role == 2) navigate("/employee", {replace: true});
       else if (res.data.user.role == 3) navigate("/manager/dashboard");
-      else navigate("/");
+      else navigate("/", { replace: true });
     } catch (err) {
       if (err.response) {
         // Response came from backend with an error message
@@ -84,14 +84,6 @@ export default function SignIn() {
               onChange={(e) => setPw(e.target.value)}
               required
             />
-            <button
-              type="button"
-              className="field__suffix"
-              aria-label={show ? "Hide password" : "Show password"}
-              onClick={() => setShow(s => !s)}
-            >
-              {show ? "🙈" : "👁️"}
-            </button>
           </label>
 
           {err && <div className="signin__error">{err}</div>}

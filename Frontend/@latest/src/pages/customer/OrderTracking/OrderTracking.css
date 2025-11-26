@@ -1,0 +1,101 @@
+.trackPage {
+  background: #fff9f0;
+  padding: 48px 0 80px;
+  min-height: 60vh;
+}
+
+.trackBox {
+  background: #fff;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.trackEyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 12px;
+  color: #c35b5b;
+}
+
+.trackBox h1 {
+  margin: 8px 0 12px;
+  color: #a32727;
+  font-size: clamp(26px, 4vw, 38px);
+  font-family: "Georgia", serif;
+}
+
+.trackStatusChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: #fff0f0;
+  color: #c51616;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.trackTotal {
+  color: #7d4b4b;
+}
+
+.trackTimeline {
+  margin: 32px 0;
+  position: relative;
+  padding-left: 24px;
+}
+.trackTimeline::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #f4c7c7;
+}
+.trackStep {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.trackDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #d94a4a;
+  margin-top: 6px;
+}
+.trackStep h3 {
+  margin: 0;
+  color: #4a1f1f;
+}
+.trackStep p {
+  margin: 2px 0;
+  color: #7d4b4b;
+}
+.trackStep small {
+  color: #a97a7a;
+}
+
+.trackMeta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  background: #fff6f2;
+  border-radius: 18px;
+  padding: 20px;
+}
+.trackMeta span {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #b35b5b;
+}
+.trackMeta p,
+.trackMeta strong {
+  margin: 4px 0 0;
+  color: #4a1f1f;
+}

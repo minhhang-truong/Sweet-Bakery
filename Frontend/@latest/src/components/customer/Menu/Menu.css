@@ -28,7 +28,7 @@
 .menu__thumbWrap { position: relative; }
 .menu__badge {
   position: absolute; top: 10px; left: 10px;
-  background: #ff6d6d; color: #fff; font-size: 12px; font-weight: 700;
+  background: #d94a4a; color: #fff; font-size: 12px; font-weight: 700;
   padding: 4px 8px; border-radius: 999px;
 }
 .menu__img {
@@ -40,10 +40,11 @@
 .menu__price { margin: 0; color: #7a6f69; }
 .menu__btn {
   justify-self: start;
-  border: none; background: #f07a86; color: #fff; font-weight: 700;
+  border: none; background: #d94a4a; color: #fff; font-weight: 700;
   padding: 8px 14px; border-radius: 999px; cursor: pointer;
+  transition: background 0.2s ease;
 }
-.menu__btn:hover { background: #d94a4a; }
+.menu__btn:hover { background: #C51616; }
 
 @media (max-width: 560px) {
   .menu__img { height: 140px; }
@@ -59,7 +60,12 @@
 .chev { font-size: 14px; }
 .menu__row { display:flex; gap:8px; }
 .menu__btnSecondary {
-  border: 2px solid #f07a86; background: #fff; color:#f07a86;
+  border: 2px solid #d94a4a; background: #fff; color:#d94a4a;
   font-weight:700; padding:8px 14px; border-radius:999px; cursor:pointer;
+  transition: background 0.2s ease;
 }
-.menu__btnSecondary:hover { background: #ffe9ec; }
+.menu__btnSecondary:hover { 
+  background: #ffe6e6; 
+  border-color: #C51616;
+  color: #C51616;
+}

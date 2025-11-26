@@ -1,37 +1,19 @@
 import "./Footer.css";
 import { Link } from "react-router-dom";
-import aboutUsImage from '../../../assets/images/common/about.png'
-import logoImage from '../../../assets/images/common/logo-sweet-bakery.png'
-import badgeImage from '../../../assets/images/common/badge.png'
+import logoImg from '../../../assets/images/common/logo-sweet-bakery.png';
+import badge from '../../../assets/images/common/badge.png';
 
 export default function Footer() {
   const year = new Date().getFullYear();
 
   return (
     <footer className="ft">
-      {/* About band */}
-      <section className="ftAbout">
-        <div className="ftAbout__media">
-          {/* Ảnh trái */}
-          <img src={aboutUsImage} alt="Cakes" />
-        </div>
-
-        <div className="ftAbout__content">
-          <h2 className="ftAbout__title">About Us</h2>
-          <p className="ftAbout__text">
-            At Savor Cake, we believe every cake tells a story of love and
-            happiness. We use the freshest ingredients, craft each design with
-            care, and deliver sweetness that brightens every celebration.
-          </p>
-        </div>
-      </section>
-
       {/* Red footer */}
       <section className="ftMain">
         <div className="container ftGrid">
           {/* Brand & address */}
           <div className="ftBrand">
-            <img className="ftLogo" src={logoImage} alt="Sweet Bakery" />
+            <img className="ftLogo" src={logoImg} alt="Sweet Bakery" />
             <h3 className="ftBrandName">Sweet Bakery</h3>
             <ul className="ftList">
               <li>No 1 Dai Co Viet, Hai Ba Trung, Ha Noi, Vietnam</li>
@@ -45,10 +27,10 @@ export default function Footer() {
           <nav className="ftCol">
             <h4 className="ftColTitle">Menu</h4>
             <ul className="ftList">
-              <li><Link to="/menu">Menu / Products</Link></li>
-              <li><Link to="/about">About Us</Link></li>
-              <li><Link to="/contact">Contact / Order</Link></li>
-              <li><Link to="/faq">FAQ / Policy</Link></li>
+              <li><Link to="/menu" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>Menu / Products</Link></li>
+              <li><Link to="/about" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>About Us</Link></li>
+              <li><Link to="/contact" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>Contact / Order</Link></li>
+              <li><Link to="/faq" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>FAQ / Policy</Link></li>
             </ul>
           </nav>
 
@@ -64,7 +46,7 @@ export default function Footer() {
 
           {/* Badge */}
           <div className="ftBadgeWrap">
-            <img className="ftBadge" src={badgeImage} alt="Certification badge" />
+            <img className="ftBadge" src={badge} alt="Certification badge" />
           </div>
         </div>
 

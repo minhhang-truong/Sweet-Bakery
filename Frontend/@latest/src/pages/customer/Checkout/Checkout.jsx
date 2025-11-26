@@ -1,8 +1,13 @@
 import "./Checkout.css";
 import { useMemo, useState } from "react";
 import { useCart } from "../../../context/CartContext.jsx";
-import { formatVND } from "../../../lib/money.js";
+import { formatVND } from "../../../lib/money";
 import { Link, useNavigate } from "react-router-dom";
+import { generateOrderId, saveOrder } from "../../../lib/orders.js";
+import axios from "axios";
+import Header from "../../../components/common/Header/Header.jsx";
+import Footer from "../../../components/common/Footer/Footer.jsx";
+const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const CITIES = ["Hà Nội", "TP. Hồ Chí Minh", "Đà Nẵng"];
 const DISTRICTS = {
@@ -38,7 +43,7 @@ export default function Checkout() {
 
   const [invoice, setInvoice] = useState(false);
   const [date, setDate] = useState(() => new Date().toISOString().slice(0,10));
-  const [slot, setSlot] = useState("Sáng (7h–11h)");
+  const [slot, setSlot] = useState("Morning (7PM-11PM)");
 
   const [voucher, setVoucher] = useState("");
   const [voucherMsg, setVoucherMsg] = useState("");
@@ -63,13 +68,13 @@ export default function Checkout() {
 
   function applyVoucher() {
     if (voucher.toUpperCase() === "BA25") {
-      setVoucherMsg("Áp dụng mã BA25: giảm 25.000₫");
+      setVoucherMsg("Apply code BA25: decrease by 25.000₫");
     } else if (voucher.toUpperCase() === "FREESHIP") {
-      setVoucherMsg("Áp dụng mã FREESHIP: miễn phí ship");
+      setVoucherMsg("Apply code FREESHIP: free ship");
     } else if (!voucher) {
       setVoucherMsg("");
     } else {
-      setVoucherMsg("Mã không hợp lệ");
+      setVoucherMsg("Invalid voucher code");
     }
   }
 
@@ -81,11 +86,17 @@ export default function Checkout() {
     return true;
   }
 
-  function placeOrder(e) {
+  async function placeOrder(e) {
     e.preventDefault();
     if (!valid()) return;
-    // mock payload
+    const cus_id = JSON.parse(localStorage.getItem("auth:user:v1")).id;
+    const orderId = generateOrderId();
+    const placedAt = new Date().toISOString();
     const payload = {
+      id: orderId,
+      cus_id: cus_id,
+      status: "Processing",
+      placedAt,
       customer,
       receiver: receiverSame ? customer : receiver,
       address: { city, district, ward, street },
@@ -101,29 +112,44 @@ export default function Checkout() {
         total,
       },
       voucher: voucher.toUpperCase() || null,
+      timeline: [
+        { label: "Order placed", time: placedAt, note: "Pending" },
+        { label: "Preparing", time: null, note: "Preparing" },
+        { label: "On delivery", time: null, note: "Deliveried by shipper" },
+      ],
     };
-    console.log("🧾 ORDER:", payload);
-    cart.clear();
-    nav("/"); // thực tế sẽ điều hướng sang trang cảm ơn /order-success
+    try {
+      await axios.post(`${API_URL}/api/orders`, payload, {
+        withCredentials: true
+      });
+      saveOrder(payload);
+      cart.clear();
+      nav(`/order-success/${orderId}`);
+    } catch (err) {
+        console.error("Failed to place order", err);
+        alert("Cannot place order. Try again.");
+    }
   }
 
   const districts = DISTRICTS[city] || [];
   const wards = WARDS[district] || [];
 
   return (
-    <main className="checkout">
-      <div className="container">
-        <h1 className="co__title">Order Confirmation</h1>
+    <>
+      <Header />
+      <main className="checkout">
+        <div className="container">
+          <h1 className="co__title">Order Confirmation</h1>
 
         <div className="co__grid">
           {/* LEFT */}
           <form className="co__left" onSubmit={placeOrder}>
             {/* Customer info */}
             <section className="co__card">
-              <div className="co__cardTitle">Thông tin người đặt</div>
+              <div className="co__cardTitle">Customer information</div>
 
               <label className="co__row">
-                <span>Họ và tên</span>
+                <span>Full name</span>
                 <input
                   value={customer.name}
                   onChange={e => setCustomer(c => ({...c, name:e.target.value}))}
@@ -133,7 +159,7 @@ export default function Checkout() {
               </label>
 
               <label className="co__row">
-                <span>Số điện thoại</span>
+                <span>Phone number</span>
                 <input
                   value={customer.phone}
                   onChange={e => setCustomer(c => ({...c, phone:e.target.value}))}
@@ -143,18 +169,18 @@ export default function Checkout() {
               </label>
 
               <label className="co__row co__row--full">
-                <span>Ghi chú</span>
+                <span>Note</span>
                 <textarea
                   value={customer.note}
                   onChange={e => setCustomer(c => ({...c, note:e.target.value}))}
-                  placeholder="Ví dụ: không vẽ chữ"
+                  placeholder="e.g., No lettering"
                 />
               </label>
             </section>
 
             {/* Receiver */}
             <section className="co__card">
-              <div className="co__cardTitle">Thông tin người nhận</div>
+              <div className="co__cardTitle">Recipient information</div>
 
               <label className="co__check">
                 <input
@@ -162,22 +188,22 @@ export default function Checkout() {
                   checked={receiverSame}
                   onChange={e => setReceiverSame(e.target.checked)}
                 />
-                <span>Giống người đặt hàng</span>
+                <span>Same as customer</span>
               </label>
 
               {!receiverSame && (
                 <>
                   <label className="co__row">
-                    <span>Họ và tên</span>
+                    <span>Full name</span>
                     <input
                       value={receiver.name}
                       onChange={e => setReceiver(r => ({...r, name:e.target.value}))}
-                      placeholder="Tên người nhận"
+                      placeholder="Recipient name"
                       required
                     />
                   </label>
                   <label className="co__row">
-                    <span>Số điện thoại</span>
+                    <span>Phone number</span>
                     <input
                       value={receiver.phone}
                       onChange={e => setReceiver(r => ({...r, phone:e.target.value}))}
@@ -190,32 +216,32 @@ export default function Checkout() {
 
               {/* Address */}
               <div className="co__row">
-                <span>Tỉnh/Thành</span>
+                <span>City/Province</span>
                 <select value={city} onChange={e => setCity(e.target.value)}>
                   {CITIES.map(c => <option key={c}>{c}</option>)}
                 </select>
               </div>
 
               <div className="co__row">
-                <span>Quận/Huyện</span>
+                <span>District</span>
                 <select value={district} onChange={e => setDistrict(e.target.value)}>
                   {districts.map(d => <option key={d}>{d}</option>)}
                 </select>
               </div>
 
               <div className="co__row">
-                <span>Phường/Xã</span>
+                <span>Ward</span>
                 <select value={ward} onChange={e => setWard(e.target.value)}>
                   {wards.map(w => <option key={w}>{w}</option>)}
                 </select>
               </div>
 
               <label className="co__row co__row--full">
-                <span>Địa chỉ chi tiết</span>
+                <span>Detailed address</span>
                 <input
                   value={street}
                   onChange={e => setStreet(e.target.value)}
-                  placeholder="Số nhà, đường…"
+                  placeholder="House number, street, etc."
                   required
                 />
               </label>
@@ -225,48 +251,48 @@ export default function Checkout() {
             <section className="co__card">
               <label className="co__check">
                 <input type="checkbox" checked={invoice} onChange={e => setInvoice(e.target.checked)} />
-                <span>Xuất hóa đơn trong đơn hàng</span>
+                <span>Request invoice for this order</span>
               </label>
             </section>
 
             {/* Delivery time */}
             <section className="co__card">
-              <div className="co__cardTitle">Thời gian nhận hàng</div>
+              <div className="co__cardTitle">Delivery time</div>
               <div className="co__row">
-                <span>Ngày nhận</span>
+                <span>Delivery date</span>
                 <input type="date" value={date} onChange={e => setDate(e.target.value)} />
               </div>
               <div className="co__row">
-                <span>Giờ nhận</span>
+                <span>Delivery time slot</span>
                 <select value={slot} onChange={e => setSlot(e.target.value)}>
-                  <option>Sáng (7h–11h)</option>
-                  <option>Trưa (11h–14h)</option>
-                  <option>Chiều (14h–18h)</option>
-                  <option>Tối (18h–21h)</option>
+                  <option>Morning (7AM-11AM)</option>
+                  <option>Noon (11AM-2PM)</option>
+                  <option>Afternoon (2PM-6PM)</option>
+                  <option>Evening (6PM-9PM)</option>
                 </select>
               </div>
 
               <ul className="co__note">
-                <li>Lưu ý: Đơn hàng giao lẻ 1h.</li>
-                <li>Không giao đơn sau 19h30.</li>
-                <li>Nếu cần gấp, vui lòng liên hệ hotline.</li>
+                <li>Note: Delivery time may vary by 1 hour.</li>
+                <li>No deliveries after 7:30 PM.</li>
+                <li>For urgent orders, please contact our hotline.</li>
               </ul>
             </section>
 
             {/* Submit */}
             <button className="co__submit" type="submit" disabled={!valid()}>
-              Đặt hàng
+              Place Order
             </button>
 
             <div className="co__back">
-              <Link to="/cart">← Quay lại giỏ hàng</Link>
+              <Link to="/cart">← Back to cart</Link>
             </div>
           </form>
 
           {/* RIGHT */}
           <aside className="co__right">
             <section className="co__card">
-              <div className="co__cardTitle">Thanh toán</div>
+              <div className="co__cardTitle">Payment</div>
 
               {cart.items.map(it => (
                 <div key={it.id} className="co__item">
@@ -274,7 +300,7 @@ export default function Checkout() {
                     <img src={it.image} alt="" />
                     <div>
                       <div className="co__itemName">{it.name}</div>
-                      <div className="co__itemSku">Số lượng: {it.qty}</div>
+                      <div className="co__itemSku">Quantity: {it.qty}</div>
                     </div>
                   </div>
                   <div className="co__itemSum">{formatVND(it.price * it.qty)}</div>
@@ -283,53 +309,55 @@ export default function Checkout() {
 
               <div className="co__hr" />
 
-              <div className="co__line"><span>Tổng tiền hàng</span><span>{formatVND(subtotal)}</span></div>
-              {discount > 0 && <div className="co__line"><span>Giảm giá</span><span>-{formatVND(discount)}</span></div>}
+              <div className="co__line"><span>Subtotal:</span><span>{formatVND(subtotal)}</span></div>
+              {discount > 0 && <div className="co__line"><span>Discount</span><span>-{formatVND(discount)}</span></div>}
               {voucherDiscount > 0 && <div className="co__line"><span>Voucher</span><span>-{formatVND(voucherDiscount)}</span></div>}
-              <div className="co__line"><span>Phí ship tạm tính</span><span>{freeShip ? "0₫" : formatVND(shipFee)}</span></div>
+              <div className="co__line"><span>Estimated shipping fee:</span><span>{freeShip ? "0₫" : formatVND(shipFee)}</span></div>
 
               <div className="co__grand">
-                <span>Tổng đơn:</span>
+                <span>Total:</span>
                 <strong>{formatVND(total)}</strong>
               </div>
 
               {/* Voucher */}
               <div className="co__voucher">
                 <input
-                  placeholder="Mã voucher (ví dụ: BA25, FREESHIP)"
+                  placeholder="Voucher code (e.g: BA25, FREESHIP)"
                   value={voucher}
                   onChange={e => setVoucher(e.target.value)}
                 />
-                <button onClick={applyVoucher} type="button">Áp dụng</button>
+                <button onClick={applyVoucher} type="button">Apply</button>
               </div>
               {voucherMsg && <div className="co__voucherMsg">{voucherMsg}</div>}
             </section>
 
             {/* Shipping policy */}
             <section className="co__card">
-              <div className="co__cardTitle">Phí ship</div>
+              <div className="co__cardTitle">Shipping fee</div>
               <ol className="co__policy">
-                <li>Nội thành Hà Nội: đồng giá 15k.</li>
-                <li>FREESHIP khi có mã hợp lệ.</li>
-                <li>Thời gian giao 7:00–21:00 hàng ngày.</li>
+                <li>Inner Hanoi: flat rate 15,000₫.</li>
+                <li>FREESHIP with a valid promo code.</li>
+                <li>Delivery hours: 7:00 AM – 9:00 PM daily.</li>
               </ol>
             </section>
 
             {/* Payment method */}
             <section className="co__card">
-              <div className="co__cardTitle">Phương thức thanh toán</div>
+              <div className="co__cardTitle">Payment Method</div>
               <label className="co__radio">
                 <input type="radio" name="pm" checked={payment==="bank"} onChange={() => setPayment("bank")} />
-                <span>Chuyển khoản ngân hàng</span>
+                <span>Bank transfer</span>
               </label>
               <label className="co__radio">
                 <input type="radio" name="pm" checked={payment==="cod"} onChange={() => setPayment("cod")} />
-                <span>Thanh toán khi nhận hàng</span>
+                <span>Cash on Delivery (COD)</span>
               </label>
             </section>
           </aside>
         </div>
-      </div>
-    </main>
+        </div>
+      </main>
+      <Footer />
+    </>
   );
 }

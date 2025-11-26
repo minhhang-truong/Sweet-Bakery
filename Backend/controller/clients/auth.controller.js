@@ -14,7 +14,7 @@ module.exports.signin = async (req, res) => {
         const match = await bcrypt.compare(password, user.password);
         if (!match) return res.status(401).json({ error: 'Invalid password' });
 
-        const token = jwt.sign({ id: user.id, role: user.role_id, email: user.email }, process.env.JWT_SECRET, {
+        const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, process.env.JWT_SECRET, {
         expiresIn: '3h',
         });
 
@@ -24,7 +24,12 @@ module.exports.signin = async (req, res) => {
           sameSite: "strict"
         });
 
-        res.json({ message: 'Login successful', user: { id: user.id, role: user.role_id, email: user.email, fullname: user.fullname } });
+        res.json({ message: 'Login successful', user: {
+          id: user.id,
+          role: user.role,
+          email: user.email,
+          fullname: user.fullname,
+        } });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });

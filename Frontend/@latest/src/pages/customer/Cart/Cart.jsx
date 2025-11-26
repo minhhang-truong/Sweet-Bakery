@@ -2,6 +2,9 @@ import "./Cart.css";
 import { useCart } from "../../../context/CartContext.jsx";
 import { formatVND } from "../../../lib/money.js";
 import { Link } from "react-router-dom";
+import Header from '../../../components/common/Header/Header.jsx';
+import Footer from '../../../components/common/Footer/Footer.jsx';
+import { useEffect, useState } from "react";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
 
@@ -9,6 +12,7 @@ export default function Cart() {
   const cart = useCart();
   const auth = useAuth();
   const nav = useNavigate();
+  const [editingQty, setEditingQty] = useState({});
 
   function handleCheckout() {
     if (!auth.isAuthed) {
@@ -18,19 +22,25 @@ export default function Cart() {
     nav("/checkout");
   }
 
-  if (cart.items.length === 0) {
-    return (
-      <main className="cart">
-        <div className="container">
-          <h1 className="cart__title">Shopping Cart</h1>
-          <p>Giỏ của bạn đang trống.</p>
-          <Link to="/menu" className="cart__back">Xem sản phẩm</Link>
-        </div>
-      </main>
-    );
-  }
+  useEffect(() => {
+    const nextState = {};
+    cart.items.forEach((item) => {
+      nextState[item.id] = String(item.qty);
+    });
+    setEditingQty(nextState);
+  }, [cart.items]);
 
-  return (
+  const EmptyState = () => (
+    <main className="cart">
+      <div className="container">
+        <h1 className="cart__title">Shopping Cart</h1>
+        <p>Your cart is empty now.</p>
+        <Link to="/menu" className="cart__back">View more products</Link>
+      </div>
+    </main>
+  );
+
+  const FilledState = () => (
     <main className="cart">
       <div className="container">
         <h1 className="cart__title">Shopping Cart</h1>
@@ -48,12 +58,50 @@ export default function Cart() {
               </div>
 
               <div className="cart__qty">
-                <button onClick={() => cart.dec(it.id)} aria-label="Decrease">−</button>
+                <button
+                  onClick={() => {
+                    const base = Number(editingQty[it.id]) || it.qty;
+                    const next = Math.max(1, base - 1);
+                    cart.setQty(it.id, next);
+                    setEditingQty((prev) => ({ ...prev, [it.id]: String(next) }));
+                  }}
+                  aria-label="Decrease"
+                >
+                  −
+                </button>
                 <input
-                  value={it.qty}
-                  onChange={(e) => cart.setQty(it.id, Number(e.target.value))}
+                  type="text"
+                  inputMode="numeric"
+                  min="1"
+                  value={editingQty[it.id] ?? it.qty}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (/^\d*$/.test(value)) {
+                      setEditingQty((prev) => ({ ...prev, [it.id]: value }));
+                      if (value !== "") {
+                        const next = Math.max(1, Number(value));
+                        cart.setQty(it.id, next);
+                      }
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const nextVal = Number(e.target.value);
+                    const safe = !e.target.value || nextVal < 1 ? 1 : nextVal;
+                    cart.setQty(it.id, safe);
+                    setEditingQty((prev) => ({ ...prev, [it.id]: String(safe) }));
+                  }}
                 />
-                <button onClick={() => cart.inc(it.id)} aria-label="Increase">+</button>
+                <button
+                  onClick={() => {
+                    const base = Number(editingQty[it.id]) || it.qty;
+                    const next = base + 1;
+                    cart.setQty(it.id, next);
+                    setEditingQty((prev) => ({ ...prev, [it.id]: String(next) }));
+                  }}
+                  aria-label="Increase"
+                >
+                  +
+                </button>
               </div>
 
               <div className="cart__sum">{formatVND(it.price * it.qty)}</div>
@@ -75,5 +123,13 @@ export default function Cart() {
         </div>
       </div>
     </main>
+  );
+
+  return (
+    <>
+      <Header />
+      {cart.items.length === 0 ? <EmptyState /> : <FilledState />}
+      <Footer />
+    </>
   );
 }
