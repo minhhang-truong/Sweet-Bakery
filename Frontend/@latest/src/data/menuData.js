@@ -169,4 +169,3 @@ export const MENU_SECTIONS = [
     ],
   },
 ];
-

@@ -29,6 +29,10 @@ module.exports.trackOrder = async (req, res) => {
         if(!result){
             return res.status(404).json({ error: 'Order not found' });
         }
+
+        if (result.customer_id !== req.user.id) {
+            return res.status(403).json({ error: "Unauthorized" });
+        }
         res.json(result);
     } catch (err) {
         console.error(err);
