@@ -37,7 +37,7 @@ export function AuthProvider({ children }) {
       if (!user) return;
       try {
         const res = await axios.put(`${API_URL}/auth/${user.id}`, patch, {
-          withCredentials: true,
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
         });
         setUser(prev => ({ ...prev, ...res.data }));
         alert("Profile updated successfully!");
