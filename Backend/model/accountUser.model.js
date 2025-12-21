@@ -28,6 +28,42 @@ class Account {
         }
     }
 
+    static async findEmployeeByEmail(email) {
+        try {
+            const result = await pool.query('SELECT * FROM useraccount WHERE email = $1', [email]);
+            if (result.rows.length === 0) return null   ;
+            const user = await pool.query('SELECT * FROM employee WHERE user_id = $1', [result.rows[0].id]);
+            return {
+                id: result.rows[0].id,
+                fullname: user.rows[0].fullname,
+                email: result.rows[0].email,
+                password: result.rows[0].password,
+                role: result.rows[0].role_id,
+            }
+        } catch(error) {
+            console.error('Error cannot find email:', error);
+            throw error;
+        }
+    }
+
+    static async findManagerByEmail(email) {
+        try {
+            const result = await pool.query('SELECT * FROM useraccount WHERE email = $1', [email]);
+            if (result.rows.length === 0) return null   ;
+            const user = await pool.query('SELECT * FROM manager WHERE user_id = $1', [result.rows[0].id]);
+            return {
+                id: result.rows[0].id,
+                fullname: user.rows[0].fullname,
+                email: result.rows[0].email,
+                password: result.rows[0].password,
+                role: result.rows[0].role_id,
+            }
+        } catch(error) {
+            console.error('Error cannot find email:', error);
+            throw error;
+        }
+    }
+
     static async findById(id) {
         try {
             const result = await pool.query('SELECT * FROM useraccount WHERE id = $1', [id]);

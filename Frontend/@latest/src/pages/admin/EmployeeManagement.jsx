@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import ManagerHeader from "../../components/admin/ManagerHeader.jsx";
 import ManagerSidebar from "../../components/admin/ManagerSidebar.jsx";
@@ -6,16 +6,7 @@ import ManagerFooter from "../../components/admin/ManagerFooter.jsx";
 import AddEmployeeModal from "../../components/admin/AddEmployeeModal.jsx";
 import DeleteConfirmation from "../../components/admin/DeleteConfirmation.jsx";
 import DeleteSuccess from "../../components/admin/DeleteSuccess.jsx";
-
-const mockEmployees = Array(15).fill(null).map((_, i) => ({
-  id: `#OR00${i + 1}`,
-  fullName: "Nguyen Van A",
-  empId: "001",
-  email: "0912345678",
-  phone: "12:30 12/10/25",
-  salary: "150,000 đ",
-  status: "confirmed",
-}));
+import api from "../../lib/axiosAdmin.js";
 
 const EmployeeManagement = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -24,27 +15,49 @@ const EmployeeManagement = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
-  const [employees, setEmployees] = useState(mockEmployees);
+
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const fetchEmployees = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get("/manager/employees");
+      const formattedData = res.data.map((item) => ({
+        empId: item.id,
+        fullName: item.fullname,
+        status: item.status,
+        email: item.email,
+        phone: item.phone,
+        startDate: new Date(item.hire_date).toLocaleDateString(),
+      }));
+      setEmployees(formattedData);
+    } catch (err) {
+      message.error("Failed to load orders");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
 
   const handleRowClick = (emp) => {
-    setSelectedEmployee({
-      fullName: emp.fullName,
-      phoneNumber: "0912345678",
-      email: "sample@gmail.com",
-      startDate: "12/10/2025",
-      loginEmail: "sample@gmail.com",
-      password: "password",
-      id: emp.empId,
-      role: "Seller",
-      status: "working / stopped working",
-      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
-    });
+    setSelectedEmployee(emp);
     setShowViewModal(true);
   };
 
-  const handleSaveEmployee = (data) => {
-    console.log("Saving employee:", data);
-    setShowAddModal(false);
+  const handleSaveEmployee = async (data) => {
+    try {
+      const res = await api.post("/manager/employees/add", data);
+      setShowAddModal(false);
+      fetchEmployees(); // reload list
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleDeleteEmployee = () => {
@@ -52,10 +65,16 @@ const EmployeeManagement = () => {
     setShowDeleteConfirm(true);
   };
 
-  const confirmDelete = () => {
-    setShowDeleteConfirm(false);
-    setShowDeleteSuccess(true);
-    setEmployees((prev) => prev.slice(0, -1));
+  const confirmDelete = async () => {
+    try {
+      const id = selectedEmployee.id;
+      await api.delete(`/manager/employees`, id);
+      setShowDeleteConfirm(false);
+      setShowDeleteSuccess(true);
+      fetchEmployees();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   if (showAddModal) {
@@ -70,10 +89,9 @@ const EmployeeManagement = () => {
   if (showViewModal && selectedEmployee) {
     return (
       <AddEmployeeModal
-        onSave={() => {}}
-        onCancel={() => setShowViewModal(false)}
         initialData={selectedEmployee}
         viewMode
+        onCancel={() => setShowViewModal(false)}
         onDelete={handleDeleteEmployee}
       />
     );

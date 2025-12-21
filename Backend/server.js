@@ -8,6 +8,7 @@ require('dotenv').config();
 
 const route = require('./routes/clients/index.route');
 const routeEmployee = require('./routes/employee/index.route');
+const routeAdmin = require('./routes/admin/index.route');
 // const routeAdmin = require('./routes/admin/index.route');
 
 // const systemConfig = require('./config/system');
@@ -40,7 +41,7 @@ app.use((req, res, next) => {
 });
 
 app.use(cors({
-  origin: 'http://localhost:5173', // địa chỉ frontend
+  origin: process.env.FRONTEND_URL, // địa chỉ frontend
   credentials: true
 }));
 
@@ -57,7 +58,7 @@ app.set('view engine', 'pug');
 //Route
 route(app);
 routeEmployee(app);
-// routeAdmin(app);
+routeAdmin(app);
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);

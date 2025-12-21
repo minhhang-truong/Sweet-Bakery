@@ -3,7 +3,7 @@ import ManagerDashboard from "../../pages/admin/ManagerDashboard";
 import EmployeeManagement from "../../pages/admin/EmployeeManagement";
 import ProductManagement from "../../pages/admin/ProductManagement";
 import RevenueReport from "../../pages/admin/RevenueReport";
-import ManagerLayout from "../../layouts/ManageLayout";
+import ManagerLayout from "../../layouts/ManagerLayout.jsx";
 import SigninPages from "../../pages/admin/Login/SignIn.jsx";
 
 export const managerRoutes = [
@@ -20,9 +20,7 @@ export const managerRoutes = [
     {
         path: "/manager/signin",
         element: (
-        <ManagerLayout>
             <SigninPages/>
-        </ManagerLayout>
         ),
     },
     {

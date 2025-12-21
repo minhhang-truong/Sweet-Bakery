@@ -5,13 +5,13 @@ const jwt = require('jsonwebtoken');
 module.exports.signin = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const user = await Account.findEmployeeByEmail(email);
+        const user = await Account.findManagerByEmail(email);
 
         if (!user){
             return res.status(404).json({ error: 'User not found' });
         }
 
-        if (user.role !== 2) {
+        if (user.role !== 3) {
             return res.status(403).json({ error: 'You do not have permission to login here' });
         }
 

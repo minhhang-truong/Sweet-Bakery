@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Table, Tag, Calendar, theme, message } from "antd";
 import axios from "axios";
-import api from "../../../lib/axios";
+import api from "../../../lib/axiosEmployee";
 import dayjs from "dayjs";
 import OrderDetail from "../../../components/employee/OrderDetail/OrderDetail";
 import "./OrderManagement.css";

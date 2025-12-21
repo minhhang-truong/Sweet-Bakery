@@ -11,7 +11,7 @@ const AddProductModal = ({
 }) => {
   const [data, setData] = useState(
     initialData || {
-      productName: "",
+      name: "",
       price: "",
       category: "",
       description: "",
@@ -23,8 +23,8 @@ const AddProductModal = ({
   );
 
   const mainInfo = [
-    { label: "Product name", value: data.productName },
-    { label: "Price", value: data.price },
+    { label: "Product name", value: data.name },
+    { label: "Price", value: `${data.price} đ` },
     { label: "Category", value: data.category },
     { label: "Description", value: data.description },
   ];

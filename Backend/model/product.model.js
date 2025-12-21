@@ -40,11 +40,33 @@ class Product {
 
     static async getStock() {
         try {
-            const query = `SELECT p.id, p.name, price, stock, c.name as category FROM product p
+            const query = `SELECT p.id, p.name, price, stock, c.name as category, p.description FROM product p
                             JOIN category c ON p.category_id = c.id
                             ORDER BY p.id;`
             const res = await pool.query(query);
             return res.rows;
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
+    static async addProduct(data) {
+        try {
+            const query = `INSERT INTO product (name, category_id, price, provider_id, images, id, stock) VALUES
+            ($1, $2, $3, $4, $5, $6, 0);`;
+            const values = [data.name, data.categoryId, data.price, data.providerId, data.images, data,id];
+            await pool.query(query, values);
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
+    static async deleteProduct(id) {
+        try {
+            const query = `DELETE FROM product WHERE id = $1`;
+            await pool.query(query, [id]);
         } catch (error) {
             console.error(error);
             throw error;

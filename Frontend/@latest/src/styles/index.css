@@ -4,8 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===================== */
+/* THEME VARIABLES */
+/* ===================== */
 @layer base {
-  :root {
+  .manager-root {
     --background: 47 100% 96%;
     --foreground: 0 0% 15%;
 
@@ -56,17 +59,24 @@
   }
 }
 
+/* ===================== */
+/* BASE STYLES (SCOPED) */
+/* ===================== */
 @layer base {
-  * {
+  .manager-root * {
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground font-sans;
+  .manager-root {
+    @apply bg-background text-foreground;
     font-family: 'Poppins', sans-serif;
+    min-height: 100vh;
   }
 }
 
+/* ===================== */
+/* COMPONENTS */
+/* ===================== */
 @layer components {
   .bakery-title {
     font-family: 'Dancing Script', cursive;

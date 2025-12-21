@@ -1,9 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { FileText, Users, Plus, Cake } from "lucide-react";
 import logoImg from '../../assets/images/common/logo-sweet-bakery.png';
+import { useAuth } from '../../context/AuthContext';
 
 const ManagerDashboard = () => {
   const navigate = useNavigate();
+  const auth = useAuth();
+
+  const user = JSON.parse(localStorage.getItem("auth:user:v1")) || { name: "Admin" };
 
   const menuItems = [
     { icon: FileText, label: "Revenue Report", path: "/manager/revenue" },
@@ -13,7 +17,8 @@ const ManagerDashboard = () => {
   ];
 
   const handleLogout = () => {
-    navigate("/");
+    auth.logout();
+    navigate("/manager/signin");
   };
 
   return (
@@ -61,7 +66,7 @@ const ManagerDashboard = () => {
               <h1 className="text-6xl font-bold text-secondary mb-2">
                 Welcome back,
               </h1>
-              <h1 className="text-6xl font-bold text-secondary mb-4">Admin!</h1>
+              <h1 className="text-6xl font-bold text-secondary mb-4">{user.name}!</h1>
               <p className="text-xl text-muted-foreground">
                 Manage your Bakery today!
               </p>

@@ -1,10 +1,11 @@
 import { Menu, User } from "lucide-react";
 import logoImg from '../../assets/images/common/logo-sweet-bakery.png';
 
+const user = JSON.parse(localStorage.getItem("auth:user:v1")) || { name: "Admin" };
 const ManagerHeader = ({
   onMenuClick,
-  userName = "Ngo Minh Ngoc",
-  userEmail = "ngoc.nm235984@sis.hust.edu.vn",
+  userName = user.name,
+  userEmail = user.email,
   userRole = "Owner",
 }) => {
   return (

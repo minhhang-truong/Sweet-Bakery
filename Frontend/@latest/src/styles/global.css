@@ -1,7 +1,8 @@
 /* 1) Reset nhẹ & hộp tính kích thước dễ kiểm soát */
-*,
-*::before,
-*::after {
+.public-root,
+.public-root * ,
+.public-root *::before,
+.public-root *::after {
   box-sizing: border-box;
 }
 

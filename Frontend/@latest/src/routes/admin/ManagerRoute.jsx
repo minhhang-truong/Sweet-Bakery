@@ -5,8 +5,8 @@ export default function ManagerRoute({ children }) {
   const auth = useAuth();
 
   // Chưa đăng nhập → vẫn cho vào (guest)
-  if (!auth.isAuthed) return children;
-  // if (!auth.isAuthed) return <Navigate to="/manager/signin" replace />;
+  // if (!auth.isAuthed) return children;
+  if (!auth.isAuthed) return <Navigate to="/manager/signin" replace />;
 
   // Nếu là employee → chặn
   if (auth.user.role === 2) return <Navigate to="/employee" replace />;

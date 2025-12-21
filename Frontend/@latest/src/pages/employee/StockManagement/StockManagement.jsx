@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Table, message } from "antd";
 import axios from "axios";
-import api from "../../../lib/axios";
+import api from "../../../lib/axiosEmployee";
 import "./StockManagement.css";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL;

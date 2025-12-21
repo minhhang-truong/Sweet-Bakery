@@ -5,8 +5,9 @@ import ManagerHeader from "../../components/admin/ManagerHeader.jsx";
 import ManagerSidebar from "../../components/admin/ManagerSidebar.jsx";
 import ManagerFooter from "../../components/admin/ManagerFooter.jsx";
 import InfoTable from "../../components/admin/InfoTable.jsx";
-import { Calendar } from "../../components/admin/calendar.jsx";
-// import { Calendar } from "antd";
+// import { Calendar } from "../../components/admin/calendar.jsx";
+import { Calendar } from "antd";
+import dayjs from "dayjs";
 
 const weeklyData = [
   { day: 0, value: 80 },
@@ -20,7 +21,7 @@ const weeklyData = [
 
 const RevenueReport = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(dayjs());
   const [showDailyDetail, setShowDailyDetail] = useState(false);
 
   const todayStats = [
@@ -48,7 +49,7 @@ const RevenueReport = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <ManagerSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <ManagerHeader onMenuClick={() => setSidebarOpen(true)} userRole="Employee" />
+      <ManagerHeader onMenuClick={() => setSidebarOpen(true)} />
 
       <main className="flex-1 p-8">
         <h1 className="text-4xl font-bold text-primary mb-2">Revenue Report</h1>
@@ -125,11 +126,9 @@ const RevenueReport = () => {
             <p className="text-xs text-muted-foreground mb-2">Pick a date 📅</p>
             <div className="bg-card border border-border rounded-lg p-2">
               <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={handleDateSelect}
-                className="pointer-events-auto"
-              />
+                fullscreen={false}
+                value={selectedDate}
+                onSelect={handleDateSelect}/>
             </div>
           </div>
         </div>
@@ -146,7 +145,7 @@ const RevenueReport = () => {
               <div className="flex items-center gap-3">
                 <span className="text-xl font-bold">Revenue Report</span>
                 <span className="bg-card text-foreground px-3 py-1 rounded-full text-sm font-medium">
-                  {selectedDate?.toLocaleDateString("en-GB")}
+                  {selectedDate?.format("DD/MM/YYYY")}
                 </span>
               </div>
               <button

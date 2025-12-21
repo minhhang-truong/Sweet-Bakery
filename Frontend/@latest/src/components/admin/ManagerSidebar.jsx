@@ -1,11 +1,13 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { FileText, Users, Plus, Cake, X, LayoutDashboard } from "lucide-react";
+import { useAuth } from '../../context/AuthContext';
 
 import logoImg from '../../assets/images/common/logo-sweet-bakery.png';
 
 const ManagerSidebar = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const auth = useAuth();
 
   // Sử dụng màu đỏ từ hình ảnh cho tất cả các trang để đồng nhất.
   const theme = {
@@ -32,7 +34,8 @@ const ManagerSidebar = ({ isOpen, onClose }) => {
   };
 
   const handleLogout = () => {
-    navigate("/");
+    auth.logout()
+    navigate("/manager/signin");
     onClose();
   };
 

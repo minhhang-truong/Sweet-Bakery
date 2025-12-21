@@ -3,7 +3,7 @@
   --red: #BC0000;
   --red-dark: #a01313;
   --white: #fff;
-  --muted: #ffe6e6;
+  --ft-muted: #ffe6e6;
 }
 
 /* ---------- Red footer ---------- */
@@ -27,7 +27,7 @@
 .ftColTitle{ margin: 4px 0 6px; font-weight: 700; font-size: 15px; }
 .ftList{ margin: 0; padding: 0; list-style: none; font-size: 14px; }
 .ftList li{ margin: 3px 0; }
-.ftList a{ color: var(--muted); text-decoration: none; }
+.ftList a{ color: var(--ft-muted); text-decoration: none; }
 .ftList a:hover{ text-decoration: underline; }
 
 .ftBadgeWrap{ display: flex; justify-content: flex-end; }
@@ -37,7 +37,7 @@
   text-align: right;
   padding: 10px 0 14px;
   font-size: 13px;
-  color: var(--muted);
+  color: var(--ft-muted);
   border-top: 1px solid rgba(255,255,255,.2);
   margin-top: 14px;
 }
