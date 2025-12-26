@@ -1,12 +1,22 @@
 // src/pages/OrderManagement.jsx
 import { useEffect, useState } from "react";
-import { Table, Tag, Calendar, theme, message } from "antd";
+import { Table, Tag, Calendar, theme, message, Select } from "antd";
 import axios from "axios";
 import api from "../../../lib/axiosEmployee";
 import dayjs from "dayjs";
 import OrderDetail from "../../../components/employee/OrderDetail/OrderDetail";
+import AddOrderModal from "../../../components/employee/AddOrderModal/AddOrderModal";
+import { generateOrderId } from "../../../lib/orders";
 import "./OrderManagement.css";
 const API_URL = import.meta.env.VITE_BACKEND_URL;
+
+const STATUS_OPTIONS = [
+  { value: 'pending', label: 'PENDING', color: 'orange' },
+  { value: 'confirmed', label: 'CONFIRMED', color: 'blue' },
+  { value: 'delivering', label: 'DELIVERING', color: 'cyan' },
+  { value: 'completed', label: 'COMPLETED', color: 'green' },
+  { value: 'cancelled', label: 'CANCELLED', color: 'red' },
+];
 
 const OrderManagement = () => {
   const { token } = theme.useToken();
@@ -17,6 +27,35 @@ const OrderManagement = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
+  const [isAddOrderOpen, setIsAddOrderOpen] = useState(false);
+
+  const handleStatusChange = async (orderId, newStatus) => {
+    try {
+      // 1. Cập nhật state frontend ngay để UX mượt
+      const updatedOrders = orders.map((ord) =>
+        ord.id === orderId ? { ...ord, status: newStatus } : ord
+      );
+      setOrders(updatedOrders);
+
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder({ ...selectedOrder, status: newStatus });
+      }
+
+      // 2. Gọi API backend để lưu status
+      await api.post(`/employee/order/update-status`, {
+        orderId,
+        status: newStatus
+      });
+
+      message.success(`Order #${orderId} status changed to ${newStatus.toUpperCase()}`);
+    } catch (err) {
+      message.error("Failed to update order status");
+      console.error(err);
+      
+      // Nếu thất bại → revert lại state
+      fetchOrders(selectedDate);
+    }
+  };
 
   const columns = [
     { title: "Order ID", dataIndex: "id", key: "id" },
@@ -28,17 +67,51 @@ const OrderManagement = () => {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (status) => (
-        <Tag color={status === "confirmed" ? "green" : "orange"}>
-          {status}
-        </Tag>
+      render: (status, record) => (
+        // Bọc div và stopPropagation để khi bấm dropdown không bị mở Modal chi tiết
+        <div onClick={(e) => e.stopPropagation()}>
+          <Select
+            defaultValue={status}
+            value={status} // Buộc Select hiển thị giá trị mới nhất từ state
+            style={{ width: 140 }}
+            onChange={(newVal) => handleStatusChange(record.id, newVal)}
+            variant="borderless" // Bỏ viền cho giống thiết kế "Tag" hơn
+          >
+            {STATUS_OPTIONS.map((opt) => (
+              <Select.Option key={opt.value} value={opt.value}>
+                <Tag color={opt.color} style={{ marginRight: 0 }}>
+                  {opt.label}
+                </Tag>
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
       ),
     },
   ];
 
-  // Fetch orders from backend
-  useEffect(() => {
-    const fetchOrders = async (date) => {
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false); // State quản lý modal thêm mới
+
+  // Hàm xử lý khi bấm Save ở Modal thêm mới
+  const handleSaveNewOrder = async (newOrderData) => {
+    try {
+      newOrderData.id = generateOrderId();
+      newOrderData.time.slot = newOrderData.time.slot.format("HH:mm");
+      newOrderData.time.date = newOrderData.time.date.format("YYYY-MM-DD");
+
+      await api.post(`/employee/order/create`, newOrderData);
+
+      message.success("New order created successfully!");
+
+      setIsAddOrderOpen(false);
+      await fetchOrders(selectedDate);
+
+    } catch (err) {
+      message.error("Create order failed");
+    }
+  }
+
+  const fetchOrders = async (date) => {
       try {
         setLoading(true);
         const res = await api.post(`/employee/order`, {
@@ -67,6 +140,8 @@ const OrderManagement = () => {
       }
     };
 
+  // Fetch orders from backend
+  useEffect(() => {
     fetchOrders(selectedDate);
   }, [selectedDate]);
 
@@ -130,18 +205,27 @@ const OrderManagement = () => {
           />
         </div>
 
-        <div
-          className="order-calendar"
-          style={{
-            border: `1px solid ${token.colorBorderSecondary}`,
-            borderRadius: token.borderRadiusLG,
-          }}
-        >
-          <div className="calendar-title">Calendar</div>
-          <Calendar
-            fullscreen={false}
-            value={selectedDate}
-            onSelect={handleDateSelect}/>
+        <div className = "right-side-bar">
+
+          <button 
+            className= "add-order-button"
+            onClick = { () => setIsAddOrderOpen(true)}>
+            ADD ORDER
+          </button>
+
+          <div
+            className="order-calendar"
+            style={{
+              border: `1px solid ${token.colorBorderSecondary}`,
+              borderRadius: token.borderRadiusLG,
+            }}
+          >
+            <div className="calendar-title">Calendar</div>
+            <Calendar
+              fullscreen={false}
+              value={selectedDate}
+              onSelect={handleDateSelect}/>
+          </div>
         </div>
       </div>
 
@@ -150,7 +234,15 @@ const OrderManagement = () => {
         onCancel={handleCloseModal}
         order={selectedOrder}
         detail={selectedOrderDetail}
+        onStatusChange={handleStatusChange}
       />
+
+      <AddOrderModal
+        open={isAddOrderOpen}
+        onCancel={() => setIsAddOrderOpen(false)}
+        onSave={handleSaveNewOrder}
+      />
+
     </div>
   );
 };

@@ -9,3 +9,13 @@ module.exports.getStock = async (req, res) => {
         res.status(500).json({ error: "Internal Server Error" });
     }
 }
+
+module.exports.getMenu = async (req, res) => {
+    try {
+        const menu = await Product.getMenu();
+        res.json(menu);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+}

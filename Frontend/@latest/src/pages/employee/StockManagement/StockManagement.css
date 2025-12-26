@@ -7,3 +7,27 @@
 .stock-table-wrapper {
   margin-top: 20px;
 }
+
+.stock-search {
+  width: 300px;               /* default width */
+  max-width: 100%;            /* responsive for smaller screens */
+  margin: 10px 0;
+  border-radius: 8px;         /* rounded corners */
+  padding: 6px 12px;          /* inside padding */
+  border: 1px solid #d9d9d9; /* light border */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* subtle shadow */
+  transition: all 0.2s ease;
+}
+
+/* Focus state */
+.stock-search:focus {
+  border-color: #1890ff;       /* blue border on focus */
+  box-shadow: 0 2px 8px rgba(24,144,255,0.2);
+  outline: none;
+}
+
+/* Input text style */
+.stock-search input {
+  font-size: 14px;
+  color: #333;
+}

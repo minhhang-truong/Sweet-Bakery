@@ -51,6 +51,17 @@ class Product {
         }
     }
 
+    static async getMenu() {
+        try {
+            const query = `SELECT id, name, price FROM product ORDER BY name`;
+            const res= await pool.query(query);
+            return res.rows;
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
     static async addProduct(data) {
         try {
             const query = `INSERT INTO product (name, category_id, price, provider_id, images, id, stock) VALUES

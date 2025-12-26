@@ -9,4 +9,8 @@ router.post("/", verifyToken, authorize(2), controller.getAllOrders);
 
 router.post("/detail", verifyToken, authorize(2), controller.getOrderDetail);
 
+router.post("/create", verifyToken, authorize(2), controller.createOrder);
+
+router.post("/update-status", verifyToken, authorize(2), controller.updateOrderStatus);
+
 module.exports = router;

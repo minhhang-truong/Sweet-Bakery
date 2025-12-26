@@ -1,15 +1,16 @@
 // src/pages/StockManagement.jsx
 import { useEffect, useState } from "react";
-import { Table, message } from "antd";
-import axios from "axios";
+import { Table, message, Input } from "antd";
 import api from "../../../lib/axiosEmployee";
 import "./StockManagement.css";
 
-const API_URL = import.meta.env.VITE_BACKEND_URL;
+const { Search } = Input;
 
 const StockManagement = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [filteredData, setFilteredData] = useState([]);
+  const [searchKeyword, setSearchKeyword] = useState("");
 
   const columns = [
     { title: "Product SKU", dataIndex: "sku", key: "sku", width: 120 },
@@ -39,6 +40,7 @@ const StockManagement = () => {
         }));
 
         setData(formattedData);
+        setFilteredData(formattedData);
       } catch (err) {
         message.error("Failed to load stock data");
         console.error(err);
@@ -50,16 +52,40 @@ const StockManagement = () => {
     fetchStock();
   }, []);
 
+  const handleSearchChange = (e) => {
+    const keyword = e.target.value.toLowerCase();
+    setSearchKeyword(keyword);
+
+    const filtered = data.filter(
+      (item) =>
+        item.sku.toLowerCase().includes(keyword) ||
+        item.name.toLowerCase().includes(keyword) ||
+        item.category.toLowerCase().includes(keyword)
+    );
+    setFilteredData(filtered);
+  };
+
   return (
     <div className="stock-management">
       <div className="page-title-container">
         <div className="page-title">STOCK MANAGEMENT</div>
       </div>
 
+      {/* Search bar */}
+      <div style={{ margin: "10px 0" }}>
+        <Search
+          placeholder="Search by SKU, Name, or Category"
+          allowClear
+          value={searchKeyword}
+          onChange={handleSearchChange}
+          className="stock-search"
+        />
+      </div>
+
       <div className="stock-table-wrapper">
         <Table
           columns={columns}
-          dataSource={data}
+          dataSource={filteredData}
           loading={loading}
           bordered
           pagination={false}

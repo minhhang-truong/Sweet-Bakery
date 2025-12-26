@@ -1,11 +1,19 @@
 // src/components/employee/OrderDetail.jsx
 import React from 'react';
-import { Modal, Row, Col, Input, Button, Tag } from 'antd';
+import { Modal, Row, Col, Input, Button, Tag, Select } from 'antd';
 import styles from './OrderDetail.module.css';
 
 const { TextArea } = Input;
 
-const OrderDetail = ({ open, onCancel, order, detail }) => {
+const STATUS_OPTIONS = [
+  { value: 'pending', label: 'PENDING', color: 'orange' },
+  { value: 'confirmed', label: 'CONFIRMED', color: 'blue' },
+  { value: 'delivering', label: 'DELIVERING', color: 'cyan' },
+  { value: 'completed', label: 'COMPLETED', color: 'green' },
+  { value: 'cancelled', label: 'CANCELLED', color: 'red' },
+];
+
+const OrderDetail = ({ open, onCancel, order, detail, onStatusChange }) => {
   // Nếu chưa chọn order nào thì không render gì cả
   if (!order) return null;
 
@@ -30,7 +38,18 @@ const OrderDetail = ({ open, onCancel, order, detail }) => {
         {/* Header */}
         <div className={styles.headerContainer}>
           <h2 className={styles.headerTitle}>ORDER ID: {order.id}</h2>
-          <Tag color="blue" className={styles.statusTag}>Confirmed</Tag>
+          <Select
+            value={order.status}
+            onChange={(newVal) => onStatusChange(order.id, newVal)}
+            style={{ width: 150 }}
+            size="middle"
+          >
+             {STATUS_OPTIONS.map((opt) => (
+              <Select.Option key={opt.value} value={opt.value}>
+                <Tag color={opt.color}>{opt.label}</Tag>
+              </Select.Option>
+            ))}
+          </Select>
         </div>
         <p className={styles.orderTime}>Order time: {order.time}</p>
 

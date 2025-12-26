@@ -4,9 +4,9 @@ class Order {
     static async createOrder(data) {
         try {
             const query = `INSERT INTO orders
-                        (id, orderdate, customer_id, total_amount, payment, receive_time, receive_date, note, receive_address, receiver, receive_phone)
-                        VALUES ($1, CURRENT_DATE, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`;
-            const values = [data.id, data.cus_id, data.prices.total, data.payment, data.time.slot, data.time.date, data.customer.note, data.address, data.receiver.name, data.receiver.phone];
+                        (id, orderdate, customer_id, total_amount, payment, receive_time, receive_date, note, receive_address, receiver, receive_phone, status)
+                        VALUES ($1, CURRENT_DATE, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`;
+            const values = [data.id, data.cus_id, data.prices.total, data.payment, data.time.slot, data.time.date, data.customer.note, data.address, data.receiver.name, data.receiver.phone, data.status];
             const res = await pool.query(query, values);
             
             for(let item of data.items){
@@ -57,10 +57,14 @@ class Order {
 
     static async getAllOrdersByDate(data){
         try {
-            const query = `SELECT orders.id, fullname, receive_phone, ordertime, total_amount, orders.status,
-                            receive_date, receive_time, receive_address, receiver, phone FROM orders
-                           JOIN customer ON orders.customer_id = customer.user_id
-                           JOIN useraccount ON customer.user_id = useraccount.id
+            const query = `SELECT orders.id,
+                                    COALESCE(fullname, receiver) AS fullname,
+                                    receive_phone, ordertime, total_amount, orders.status,
+                                    receive_date, receive_time, receive_address, receiver,
+                                    COALESCE(phone, receive_phone) AS phone
+                                    FROM orders
+                           LEFT JOIN customer ON orders.customer_id = customer.user_id
+                           LEFT JOIN useraccount ON customer.user_id = useraccount.id
                            WHERE orderdate = $1
                            ORDER BY ordertime;`
             const value = [data]
@@ -80,6 +84,19 @@ class Order {
             const values = [orderId];
             const res = await pool.query(query, values);
             return res.rows;
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
+    static async updateOrderStatus(orderInfo) {
+        try {
+            const query = `UPDATE orders
+                           SET status = $1
+                           WHERE id = $2;`
+            const values = [orderInfo.status, orderInfo.orderId];
+            await pool.query(query, values);
         } catch (error) {
             console.error(error);
             throw error;
