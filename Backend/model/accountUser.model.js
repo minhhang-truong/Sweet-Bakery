@@ -15,6 +15,7 @@ class Account {
             const result = await pool.query('SELECT * FROM useraccount WHERE email = $1', [email]);
             if (result.rows.length === 0) return null   ;
             const user = await pool.query('SELECT * FROM customer WHERE user_id = $1', [result.rows[0].id]);
+            if (user.rows.length === 0) return null;
             return {
                 id: result.rows[0].id,
                 fullname: user.rows[0].fullname,
@@ -31,8 +32,9 @@ class Account {
     static async findEmployeeByEmail(email) {
         try {
             const result = await pool.query('SELECT * FROM useraccount WHERE email = $1', [email]);
-            if (result.rows.length === 0) return null   ;
+            if (result.rows.length === 0) return null;
             const user = await pool.query('SELECT * FROM employee WHERE user_id = $1', [result.rows[0].id]);
+            if (user.rows.length === 0) return null;
             return {
                 id: result.rows[0].id,
                 fullname: user.rows[0].fullname,
@@ -51,6 +53,7 @@ class Account {
             const result = await pool.query('SELECT * FROM useraccount WHERE email = $1', [email]);
             if (result.rows.length === 0) return null   ;
             const user = await pool.query('SELECT * FROM manager WHERE user_id = $1', [result.rows[0].id]);
+            if (user.rows.length === 0) return null;
             return {
                 id: result.rows[0].id,
                 fullname: user.rows[0].fullname,

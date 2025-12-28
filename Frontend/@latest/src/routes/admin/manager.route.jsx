@@ -5,8 +5,17 @@ import ProductManagement from "../../pages/admin/ProductManagement";
 import RevenueReport from "../../pages/admin/RevenueReport";
 import ManagerLayout from "../../layouts/ManagerLayout.jsx";
 import SigninPages from "../../pages/admin/Login/SignIn.jsx";
+import NotFound from "../../pages/admin/NotFound.jsx";
 
 export const managerRoutes = [
+    {
+        path: "*",
+        element: (
+            <ManagerLayout>
+                <NotFound/>
+            </ManagerLayout>
+        ),
+    },
     {
         path: "/manager/dashboard",
         element: (

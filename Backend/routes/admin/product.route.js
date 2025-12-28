@@ -9,6 +9,10 @@ router.get("/", verifyToken, authorize(3), controller.getProducts);
 
 router.post("/add", verifyToken, authorize(3), controller.addProduct);
 
-router.delete("/delete", verifyToken, authorize(3), controller.deleteProduct);
+router.delete("/delete/:id", verifyToken, authorize(3), controller.deleteProduct);
+
+router.get("/details/:id", verifyToken, authorize(3), controller.productDetails);
+
+router.put("/edit", verifyToken, authorize(3), controller.updateProduct);
 
 module.exports = router;

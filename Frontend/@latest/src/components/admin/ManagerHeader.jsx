@@ -1,4 +1,5 @@
 import { Menu, User } from "lucide-react";
+import React from 'react';
 import logoImg from '../../assets/images/common/logo-sweet-bakery.png';
 
 const user = JSON.parse(localStorage.getItem("auth:user:v1")) || { name: "Admin" };
