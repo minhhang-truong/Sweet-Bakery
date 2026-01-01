@@ -54,16 +54,17 @@ const Sidebar = () => {
           Stock Management
         </NavLink>
 
+        {/* Link 3: Your Profile */}
         <NavLink 
-          to="/employee/profile"
-          // Logic: Nếu đang active thì ghép thêm class .active, không thì thôi
+          to="/employee/profile" 
           className={({ isActive }) => 
             isActive ? `${styles.navItem} ${styles.active}` : styles.navItem
           }
         >
           <BiUser className={styles.icon} />
-          Profile
+          My Profile
         </NavLink>
+
       </nav>
 
       {/* 3. LOGOUT SECTION */}

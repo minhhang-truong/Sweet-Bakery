@@ -9,6 +9,10 @@ router.get("/", verifyToken, authorize(3), controller.getEmployees);
 
 router.post("/add", verifyToken, authorize(3), controller.addEmployee);
 
-router.delete("/delete", verifyToken, authorize(3), controller.deleteEmployee);
+router.delete("/delete/:id", verifyToken, authorize(3), controller.deleteEmployee);
+
+router.get("/details/:id", verifyToken, authorize(3), controller.getEmployeeDetails);
+
+router.put("/edit", verifyToken, authorize(3), controller.editEmployee);
 
 module.exports = router;

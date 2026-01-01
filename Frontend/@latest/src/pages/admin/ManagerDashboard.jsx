@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { FileText, Users, Plus, Cake } from "lucide-react";
+import { FileText, Users, User, Plus, Cake } from "lucide-react";
 import logoImg from '../../assets/images/common/logo-sweet-bakery.png';
 import { useAuth } from '../../context/AuthContext';
+
+import dashBoard from '../../assets/images/admin/Bakery Image.jpg';
 
 const ManagerDashboard = () => {
   const navigate = useNavigate();
@@ -14,6 +16,7 @@ const ManagerDashboard = () => {
     { icon: Users, label: "Human Resource\nManagement", path: "/manager/employees" },
     // { icon: Plus, label: "Add Product", path: "/manager/products" },
     { icon: Cake, label: "Products Details", path: "/manager/products" },
+    { icon: User, label: "Profile", path: "/manager/profile" },
   ];
 
   const handleLogout = () => {
@@ -86,7 +89,7 @@ const ManagerDashboard = () => {
             {/* Lớp phủ gradient nhẹ để ảnh trông hòa hợp hơn với nền (tùy chọn) */}
           <div className="absolute inset-0 bg-gradient-to-t from-amber-900/30 via-amber-700/10 to-transparent pointer-events-none z-10" />
           <img
-            src="/images/menu/Bakery Image.jpg"
+            src={dashBoard}
             alt="Bakery decorative"
             className="w-full h-full object-cover object-center"
           />

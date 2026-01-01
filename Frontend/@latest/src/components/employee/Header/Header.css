@@ -1,0 +1,148 @@
+:root {
+  --primary-red: #b71c1c; /* Màu đỏ đậm */
+  --bg-cream: #fffbf0;    /* Màu nền kem */
+  --text-color: #333;
+}
+/* Header Styles */
+.header {
+  background-color: var(--primary-red);
+  height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.menu-icon {
+  font-size: 24px;
+  cursor: pointer;
+  margin-right: 20px;
+}
+
+/* ============================
+   SIDEBAR / DRAWER (LEFT MENU)
+   ============================ */
+.custom-drawer .ant-drawer-content {
+  background-color: #fff7ef;     /* Nền kem nhẹ */
+}
+
+/* Title */
+.custom-drawer .ant-drawer-title {
+  color: #ba1b1b;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  font-size: 18px;
+}
+
+/* Body wrapper for spacing */
+.custom-drawer .ant-drawer-body {
+  padding-top: 15px;
+}
+
+/* Each menu item */
+.drawer-menu-item {
+  display: block;
+  padding: 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #b21818;
+  text-decoration: none;
+  border-bottom: 1px solid #f0d4c2;
+  transition: 0.25s ease;
+}
+
+/* Hover effect */
+.drawer-menu-item:hover {
+  color: #ff4747;
+  padding-left: 6px;
+}
+
+/* Remove <p> default margin */
+.drawer-menu-wrapper p {
+  margin: 0;
+}
+
+/* Shadow on drawer */
+.custom-drawer .ant-drawer-content-wrapper {
+  box-shadow: 4px 0 18px rgba(0, 0, 0, 0.12);
+}
+
+/* Custom Antd Table Header to match design */
+.ant-table-thead > tr > th {
+  background-color: #f0f0f0 !important;
+  font-weight: bold;
+}
+
+/* ... Giữ nguyên các code cũ ... */
+
+/* --- SIDEBAR STYLES (Mới thêm) --- */
+
+/* 1. Tùy chỉnh Drawer của Antd để xóa khoảng trắng mặc định */
+/* src/components/ManagementLayout.css */
+
+/* ... code cũ giữ nguyên ... */
+
+/* --- SỬA DRAWER THÀNH DẠNG POPUP NGẮN --- */
+
+/* 1. Ép chiều cao của khung bao ngoài (wrapper) */
+.custom-drawer.ant-drawer .ant-drawer-content-wrapper {
+  height: auto !important; /* Chiều cao tự động co giãn theo nội dung */
+  bottom: auto !important; /* Bỏ neo dưới đáy để không bị kéo dài */
+  top: 60px !important;    /* Cách đỉnh 60px (bằng chiều cao Header của bạn) */
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* Đổ bóng cho đẹp */
+}
+
+/* 2. Đảm bảo phần nội dung bên trong cũng auto height */
+.custom-drawer.ant-drawer .ant-drawer-content {
+  height: auto !important;
+  background-color: transparent !important; /* Nền trong suốt để chỉ thấy khối đỏ */
+}
+
+/* 3. Xóa các đường viền mặc định thừa thãi */
+.custom-drawer .ant-drawer-body {
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.custom-drawer .ant-drawer-header {
+  background-color: var(--bg-cream); /* Header cùng màu nền */
+  border-bottom: 1px solid #ffd0d0;
+}
+
+/* 2. Container chứa menu */
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  /* Không cần gap vì thiết kế liền mạch */
+}
+
+/* 3. Từng mục Menu (Khối đỏ) */
+.sidebar-item {
+  display: flex;
+  align-items: center; /* Căn giữa dọc */
+  background-color: #CC0000; /* Màu đỏ tươi hơn giống hình mẫu */
+  color: white;
+  padding: 25px 30px; /* Padding rộng để nút to */
+  text-decoration: none; /* Bỏ gạch chân link */
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  
+  /* Đường kẻ trắng mờ ngăn cách giữa các mục */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Hiệu ứng khi di chuột vào */
+.sidebar-item:hover {
+  background-color: #990000; /* Đậm hơn khi hover */
+  color: #fff;
+  padding-left: 35px; /* Hiệu ứng trượt nhẹ chữ */
+}
+
+/* Style cho Icon */
+.sidebar-icon {
+  font-size: 24px; /* Icon to rõ */
+  margin-right: 15px; /* Cách chữ ra một đoạn */
+}

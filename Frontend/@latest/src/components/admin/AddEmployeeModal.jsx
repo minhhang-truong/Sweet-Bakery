@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X, Pencil, Save, Trash2, CheckCircle } from "lucide-react"; 
 import ImageUploadZone from "./ImageUploadZone.jsx";
 import InfoTable from "./InfoTable.jsx";
+import api from "../../lib/axiosAdmin.js";
 
 const AddEmployeeModal = ({
   onSave,
@@ -18,53 +19,97 @@ const AddEmployeeModal = ({
       startDate: "",
       address: "",  
       dob: "",      
-      gender: "Male",
+      gender: "",
       loginEmail: "",
       password: "",
-      id: "",
-      role: "Seller",
+      role: "",
       status: "working",
       avatar: "",
+      department: "",
     }
   );
+
+  const fetchEmployee = async () => {
+    try {
+      const res = await api.get(`/manager/employees/details/${data.empId}`);
+
+      setData({
+        fullName: res.data.fullname,
+        phoneNumber: res.data.phone || "",
+        email: res.data.email,
+        startDate: res.data.hire_date,
+        address: res.data.address || "",
+        dob: res.data.dob || "",
+        gender: res.data.gender || "",
+        loginEmail: res.data.loginemail || "",
+        avatar: res.data.avatar || "",
+          // ? `${import.meta.env.VITE_BACKEND_URL}/uploads/${res.data.image}`
+          // : "",
+        department: res.data.department || "",
+        empId: res.data.id,
+      });
+    } catch (err) {
+      console.error("Failed to load employee", err);
+    }
+  };
+
+  useEffect(() => {
+    if (!initialData) return;
+
+    fetchEmployee();
+  }, [initialData]);
 
   const [isEditing, setIsEditing] = useState(!viewMode);
   
   // State cho thông báo Save thành công
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showError, setShowError] = useState(false);
 
-// --- XỬ LÝ SAVE ---
-  const handleSaveAction = () => {
-    // 1. Hiện thông báo thành công
-    setShowSuccess(true);
+  const handleSaveAction = async () => {
+    try {
+      setShowError(false);
 
-    // 2. Đợi 1 chút để người dùng nhìn thấy thông báo, sau đó mới thực hiện lưu và đóng
-    setTimeout(() => {
-      onSave(data);       // Gọi hàm lưu của cha
-      setIsEditing(false); // Tắt chế độ sửa
-      setShowSuccess(false); // Ẩn thông báo
-    }, 1000); // 1 giây
+      // gọi save và đợi kết quả
+      await onSave(data);
+      // thành công
+      setShowSuccess(true);
+      setTimeout(() => {
+        setShowSuccess(false);
+        onCancel();
+        setIsEditing(false);
+      }, 1500);
+
+    } catch (err) {
+      // thất bại
+      setShowError(true);
+      setTimeout(() => setShowError(false), 2000);
+    }
   };
 
   const personalInfo = [
-    { label: "Full name", value: data.fullName, key: "fullName" },
-    { label: "Gender", value: data.gender, key: "gender" },
-    { label: "Date of Birth", value: data.dob, key: "dob" },
-    { label: "Phone number", value: data.phoneNumber, key: "phoneNumber" },
-    { label: "Email", value: data.email, key: "email" },
-    { label: "Address", value: data.address, key: "address" },
-    { label: "Start date", value: data.startDate, key: "startDate" },
+    { label: "Full name", value: data.fullName, key: "fullName", readOnly: viewMode },
+    { label: "Gender", value: data.gender, key: "gender", readOnly: viewMode },
+    { label: "Date of Birth", value: viewMode
+    ? new Date(data.dob).toLocaleDateString()
+    : (data.dob
+        ? data.dob.split("/").reverse().join("-")
+        : ""), key: "dob", readOnly: viewMode, type: 'date' },
+    { label: "Phone number", value: data.phoneNumber, key: "phoneNumber", readOnly: viewMode },
+    { label: "Email", value: data.email, key: "email", readOnly: true },
+    { label: "Address", value: data.address, key: "address", readOnly: true },
   ];
 
   const loginInfo = [
-    { label: "Log in email", value: data.loginEmail, key: "loginEmail" },
-    { label: "Password", value: data.password, key: "password" },
-    { label: "ID", value: data.id, key: "id" },
+    { label: "Log in email", value: data.loginEmail, key: "loginEmail", readOnly: viewMode },
+    { label: "Password", value: data.password, key: "password", readOnly: viewMode },
+    { label: "ID", value: data.empId, key: "empId", readOnly: viewMode },
     { label: "Role", value: data.role, key: "role" },
   ];
 
   const additionalInfo = [
     { label: "Status", value: data.status, key: "status" },
+    { label: "Start date", value: data.startDate ? new Date(data.startDate).toLocaleDateString() : '', key: "startDate", readOnly: true, type: 'date'},
+    { label: "Department", value: data.department, key: "department" },
   ];
 
   const handleValueChange = (key, value) => {
@@ -85,6 +130,14 @@ const AddEmployeeModal = ({
         <div className="absolute z-[60] flex flex-col items-center justify-center bg-white border-2 border-green-500 text-green-700 px-8 py-6 rounded-2xl shadow-2xl animate-in fade-in zoom-in duration-300">
           <CheckCircle className="w-12 h-12 mb-3 text-green-600" />
           <p className="text-lg font-bold">Saved Successfully!</p>
+        </div>
+      )}
+
+      {showError && (
+        <div className="absolute z-[60] flex flex-col items-center justify-center bg-white border-2 border-red-500 text-red-700 px-8 py-6 rounded-2xl shadow-2xl animate-in fade-in zoom-in duration-300">
+          <X className="w-12 h-12 mb-3 text-red-600" />
+          <p className="text-lg font-bold">Update failed!</p>
+          <p className="text-sm text-gray-500 mt-1">Please try again</p>
         </div>
       )}
 
@@ -121,14 +174,14 @@ const AddEmployeeModal = ({
                    Nếu là mode sửa -> ImageUploadZone sẽ lo việc Drag & Drop
                 */}
                 <div className={!isEditing ? "pointer-events-none opacity-90 grayscale-[0.1]" : ""}>
-                    <ImageUploadZone
-                        image={data.image}
-                        className="h-64 lg:h-80 shadow-inner bg-white rounded-xl border-2 border-dashed border-gray-300 hover:border-[#d32f2f] transition-colors cursor-pointer"
-                        onImageChange={(file) => {
-                            const url = URL.createObjectURL(file);
-                            setData((prev) => ({ ...prev, image: url }));
-                        }}
-                    />
+                  <ImageUploadZone
+                    image={data.avatar}
+                    className="h-64 lg:h-80 shadow-inner bg-white rounded-xl border-2 border-dashed border-gray-300 hover:border-[#d32f2f] transition-colors cursor-pointer"
+                    uploadEndpoint="/manager/upload/avatar"
+                    onImageUploaded={(url) => {
+                      setData((prev) => ({ ...prev, avatar: url }));
+                    }}
+                  />
                 </div>
                 {isEditing && (
                     <p className="text-xs text-gray-500 text-center mt-2 italic">
@@ -190,8 +243,11 @@ const AddEmployeeModal = ({
             <>
               <button 
                 onClick={() => {
-                   if(viewMode) setIsEditing(false);
-                   else onCancel();
+                  if(viewMode) {
+                  setIsEditing(false);
+                  fetchEmployee();
+                  }
+                  else onCancel();
                 }} 
                 className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-100 transition-colors"
               >

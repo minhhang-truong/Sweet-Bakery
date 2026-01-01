@@ -1,28 +1,28 @@
 import axios from "axios";
+import { forceLogout } from "./authBridge";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_BACKEND_URL,
-  withCredentials: true, // required for cookie-based auth
+  withCredentials: true,
 });
 
 let hasShownAlert = false;
 
 api.interceptors.response.use(
   res => res,
-  err => {
+  async err => {
     if (err.response?.status === 401 && !hasShownAlert) {
       hasShownAlert = true;
 
-      // 1. Save the page user is working on
       const currentPage =
         window.location.pathname + window.location.search;
 
       localStorage.setItem("postLoginRedirect", currentPage);
 
-      // 2. Inform user
       alert("Your session has expired. Please sign in again.");
 
-      // 3. Redirect to login
+      await forceLogout();
+
       window.location.href = "/signin";
     }
     return Promise.reject(err);

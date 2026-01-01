@@ -7,7 +7,6 @@ import { generateOrderId, saveOrder } from "../../../lib/orders.js";
 import api from "../../../lib/axiosCustomer.js";
 import Header from "../../../components/common/Header/Header.jsx";
 import Footer from "../../../components/common/Footer/Footer.jsx";
-const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const CITIES = ["Ha Noi", "Ho Chi Minh City", "Da Nang"];
 const DISTRICTS = {
@@ -97,7 +96,7 @@ export default function Checkout() {
     const payload = {
       id: orderId,
       cus_id: cus_id,
-      status: "Pending",
+      status: "pending",
       placedAt,
       customer,
       receiver: receiverSame ? customer : receiver,

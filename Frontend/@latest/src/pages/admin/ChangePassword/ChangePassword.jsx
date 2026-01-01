@@ -2,9 +2,10 @@ import "./ChangePassword.css";
 import { useState } from "react";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
-import Header from '../../../components/employee/Header/Header.jsx';
-import Footer from '../../../components/common/Footer/Footer.jsx';
-import api from '../../../lib/axiosEmployee.js';
+import Header from '../../../components/admin/ManagerHeader.jsx';
+import Footer from '../../../components/admin/ManagerFooter.jsx';
+import ManagerSidebar from "../../../components/admin/ManagerSidebar.jsx";
+import api from '../../../lib/axiosAdmin.js';
 import { message } from "antd";
 
 export default function ChangePassword() {
@@ -18,12 +19,19 @@ export default function ChangePassword() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Redirect if not authenticated
   if (!auth.isAuthed) {
     return (
       <>
-        <Header />
+        <ManagerSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+        {/* Header (Sticky Top) */}
+        <div className="sticky top-0 z-30">
+          <Header onMenuClick={() => setSidebarOpen(true)} />
+        </div>
+
         <main className="change-password change-password--empty">
           <div className="container">
             <h1>Redirecting…</h1>
@@ -68,7 +76,7 @@ export default function ChangePassword() {
 
     try {
       await api.put(
-        `/employee/auth/change-password/${auth.user.id}`,
+        `/manager/auth/change-password/${auth.user.id}`,
         {
           currentPassword: form.currentPassword,
           newPassword: form.newPassword,
@@ -88,7 +96,7 @@ export default function ChangePassword() {
       
       setTimeout(() => {
         auth.logout();
-        nav("/employee/signin");
+        nav("/manager/signin");
       }, 2000);
       
     } catch (err) {
@@ -100,7 +108,13 @@ export default function ChangePassword() {
 
   return (
     <>
-      <Header />
+      <ManagerSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Header (Sticky Top) */}
+      <div className="sticky top-0 z-30">
+        <Header onMenuClick={() => setSidebarOpen(true)} />
+      </div>
+
       <main className="change-password">
         <div className="container">
           <h1 className="cp__title">Change Password</h1>
@@ -168,7 +182,7 @@ export default function ChangePassword() {
                   <button
                     type="button"
                     className="cp__btn cp__btn--secondary"
-                    onClick={() => nav("/employee/profile")}
+                    onClick={() => nav("/manager/profile")}
                   >
                     Cancel
                   </button>

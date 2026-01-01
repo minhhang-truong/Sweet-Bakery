@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
-import { FileText, Users, Cake, X, LogOut, LayoutDashboard } from "lucide-react";
+import { FileText, Users, User, Cake, X, LogOut, LayoutDashboard } from "lucide-react";
 import { useAuth } from '../../context/AuthContext';
 
 import logoImg from '../../assets/images/common/logo-sweet-bakery.png';
@@ -26,6 +26,7 @@ const ManagerSidebar = ({ isOpen, onClose }) => {
     { icon: FileText, label: "Revenue Report", path: "/manager/revenue", key: "Revenue Report" },
     { icon: Users, label: "Human Resource\nManagement", path: "/manager/employees", key: "Human Resource" },
     { icon: Cake, label: "Products Details", path: "/manager/products", key: "Products Details" },
+    { icon: User, label: "Profile", path: "/manager/profile", key: "Profile" },
   ];
 
   const handleNavigation = (path) => {

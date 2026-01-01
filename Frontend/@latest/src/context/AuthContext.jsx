@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import axios from 'axios';
+import { registerLogout } from "../lib/authBridge";
 
 const KEY = "auth:user:v1";
 const AuthCtx = createContext(null);
@@ -29,8 +30,20 @@ export function AuthProvider({ children }) {
       user.name = user.fullname.split(" ")[0];
     },
     async logout() {
-      await axios.post(`${API_URL}/auth/logout`,{}, { withCredentials: true });
+      if(user.role === 1){
+        await axios.post(`${API_URL}/auth/logout`,{}, { withCredentials: true });
+      }
+      else if(user.role === 2){
+        await axios.post(`${API_URL}/employee/auth/logout`, {}, { withCredentials: true });
+      }
+      else{
+        await axios.post(`${API_URL}/manager/auth/logout`, {}, { withCredentials: true });
+      }
       setUser(null);
+    },
+
+    updateUser(patch) {
+      setUser(prev => ({ ...prev, ...patch }));
     },
 
     async updateProfile(patch) {
@@ -47,6 +60,10 @@ export function AuthProvider({ children }) {
       }
     },
   }), [user]);
+
+  useEffect(() => {
+    registerLogout(api.logout);
+  }, [api.logout]);
 
   return <AuthCtx.Provider value={api}>{children}</AuthCtx.Provider>;
 }

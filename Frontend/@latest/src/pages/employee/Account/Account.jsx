@@ -1,231 +1,265 @@
-import "./Account.css";
-import { useAuth } from "../../../context/AuthContext";
-import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+// src/pages/employee/Profile/Profile.jsx
+import React, { useEffect, useState } from 'react';
+import { Input, Button, message, DatePicker, Spin } from 'antd';
 import {
-  BiUserCircle,
-  BiLockAlt,
-  BiSave,
-} from "react-icons/bi";
+  CloudUploadOutlined,
+  LoadingOutlined,
+  LockOutlined
+} from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
+import dayjs from 'dayjs';
+import Header from '../../../components/employee/Header/Header.jsx';
+import Footer from '../../../components/common/Footer/Footer.jsx';
+import styles from './Account.module.css';
+import api from "../../../lib/axiosEmployee.js";
+import { useAuth } from "../../../context/AuthContext.jsx";
+import { toISODate } from '../../../lib/formDate.js';
+import AvatarUpload from "../../../components/employee/Upload/Upload.jsx";
 
-import Header from "../../../components/employee/Header";
-import Footer from "../../../components/employee/Footer";
-import api from "../../../lib/axiosEmployee";
-import { message } from "antd";
+const Account = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
-export default function Account() {
-  const { user, setUser } = useAuth();
-  const nav = useNavigate();
-
-  const [form, setForm] = useState({
-    fullname: user?.fullname || "",
-    email: user?.email || "",
-    phone: user?.phone || "",
-    address: user?.address || "",
-    dob: user?.dob ? user.dob : "",
-    hire_date: user?.hire_date ? user.hire_date.split("T")[0] : "",
-    avatar: user?.avatar || "",
-    department: user?.department || "",
-  });
-
+  // ---------------- STATE ----------------
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
 
+  // ---------------- FETCH PROFILE ----------------
   useEffect(() => {
-    async function fetchProfile() {
+    const fetchProfile = async () => {
       try {
-        // const token = localStorage.getItem("token");
         const res = await api.get(`/employee/auth/profile/${user.id}`);
+        const data = res.data;
 
-        // cập nhật form bằng dữ liệu từ DB
-        setForm({
-          fullname: res.data.fullname,
-          email: res.data.email,
-          phone: res.data.phone || "",
-          address: res.data.address || "",
-          dob: res.data.dob || "",
-          hire_date: res.data.hire_date || "",
-          avatar: res.data.avatar || "",
-          department: res.data.department || "",
+        setProfile({
+          id: data.id,
+          fullName: data.fullname,
+          avatar: data.avatar ?? null,
+
+          phone: data.phone ?? '',
+          email: data.email ?? '',
+          address: data.address ?? '',
+          dateOfBirth: data.dob ?? null,
+
+          loginEmail: data.loginEmail,
+
+          department: data.department,
+          hireDate: toISODate(data.hire_date),
+          role: "Seller", //data.role
+          status: "Working", //data.status,
         });
 
-      } catch (error) {
-        console.error("Failed to load user:", error);
+      } catch (err) {
+        message.error('Failed to load profile');
+      } finally {
+        setPageLoading(false);
       }
-    }
-
-    if (user) {
-      fetchProfile();
-    }
-  }, [user]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
-  };
-
-  const handleSave = async () => {
-    try {
-      setLoading(true);
-      const payload = {
-        fullname: form.fullname,
-        email: form.email,
-        phone: form.phone,
-        address: form.address,
-        dob: form.dob,
-      };
-      const res = await api.put(`/employee/auth/profile/${user.id}`, payload);
-      // update auth context
-      setForm(res.data);
-      setUser({
-        fullname: form.fullname,
-        name: form.fullname.split(" ")[0],
-        email: form.email,
-      })
-      message.success("Profile updated successfully");
-    } catch (err) {
-      message.error("Failed to update profile");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fileInputRef = useRef(null);
-
-    const handleAvatarChange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const formData = new FormData();
-        formData.append("avatar", file);
-
-        try {
-            const res = await api.put(
-            `/employee/profile/avatar/${user.id}`,
-            formData,
-            {
-                headers: { "Content-Type": "multipart/form-data" },
-            }
-            );
-
-            message.success("Avatar updated");
-            setUser(res.data);
-        } catch (err) {
-            message.error("Upload failed");
-        }
     };
 
+    fetchProfile();
+  }, []);
+
+  if (!profile) {
+    return (
+      <div style={{ textAlign: 'center', marginTop: 100 }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  // ---------------- INPUT HANDLER ----------------
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setProfile(prev => ({ ...prev, [name]: value }));
+  };
+
+  // ---------------- AVATAR UPLOAD ----------------
+  
+
+  // ---------------- SAVE PROFILE ----------------
+  const handleSave = async () => {
+    try {
+      await api.put(`/employee/auth/profile/${user.id}`, {
+        phone: profile.phone,
+        email: profile.email,
+        address: profile.address,
+        dob: profile.dateOfBirth,
+        avatar: profile.avatar
+      });
+
+      message.success("Profile updated successfully");
+    } catch (err) {
+      message.error("Update failed");
+    }
+  };
+
+  if (pageLoading) {
+    return (
+      <div style={{ textAlign: 'center', marginTop: 100 }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  // ---------------- RENDER ----------------
   return (
-    <>
+    <div>
       <Header />
 
-      <main className="emp-profile">
-        <h1 className="emp-profile__title">Employee Profile</h1>
+      <div className={styles.container}>
+        <div className={styles.pageTitle}>MY PROFILE</div>
+        <div className={styles.divider} />
 
-        <div className="emp-profile__card">
-            <div className="emp-profile__header">
-                {/* AVATAR */}
-                <div className="emp-profile__avatar">
-                    {user.avatar ? (
-                    <img
-                        src={`${import.meta.env.VITE_BACKEND_URL}/uploads/${user.avatar}`}
-                        alt="avatar"
-                    />
-                    ) : (
-                    <BiUserCircle />
-                    )}
+        <div className={styles.profileContent}>
+          {/* AVATAR */}
+          <div className={styles.avatarSection}>
+            <AvatarUpload avatar={profile.avatar} setProfile={setProfile} />
+          </div>
 
-                    <button
-                    type="button"
-                    className="emp-profile__avatarBtn"
-                    onClick={() => fileInputRef.current.click()}
-                    >
-                    Change avatar
-                    </button>
+          {/* FORM */}
+          <div className={styles.formSection}>
 
-                    <input
-                    type="file"
-                    accept="image/*"
-                    ref={fileInputRef}
-                    hidden
-                    onChange={handleAvatarChange}
-                    />
-                </div>
+            {/* PERSONAL INFORMATION */}
+            <div>
+              <div className={styles.headerRed}>Personal Information</div>
+              <table className={styles.infoTable}>
+                <tbody>
 
-                {/* USER INFO */}
-                <div className="emp-profile__basic">
-                    <h2>{form.fullname}</h2>
-                    <p className="emp-profile__role">Employee</p>
-                    <p className="emp-profile__status active">Status: Active</p>
-                </div>
+                  <tr className={styles.row}>
+                    <td className={styles.labelCell}>ID</td>
+                    <td className={styles.valueCell}>
+                      <Input value={user.id} disabled variant='borderless' />
+                    </td>
+                  </tr>
+
+                  <tr className={styles.row}>
+                    <td className={styles.labelCell}>Full name</td>
+                    <td className={styles.valueCell}>
+                      <Input value={profile.fullName} disabled variant='borderless' />
+                    </td>
+                  </tr>
+
+                  <tr className={styles.row}>
+                    <td className={styles.labelCell}>Date of birth</td>
+                    <td className={styles.valueCell}>
+                      <DatePicker
+                        value={profile.dateOfBirth ? dayjs(profile.dateOfBirth) : null}
+                        allowClear={true}
+                        placeholder="Select date of birth"
+                        disabledDate={(current) => current && current > dayjs().endOf('day')}
+                        onChange={(date) =>
+                          setProfile(prev => ({
+                            ...prev,
+                            dateOfBirth: date ? date.format('YYYY-MM-DD') : null
+                          }))
+                        }
+                      />
+                    </td>
+                  </tr>
+
+                  <tr className={styles.row}>
+                    <td className={styles.labelCell}>Phone number</td>
+                    <td className={styles.valueCell}>
+                      <Input name="phone" value={profile.phone} onChange={handleInputChange} />
+                    </td>
+                  </tr>
+
+                  <tr className={styles.row}>
+                    <td className={styles.labelCell}>Email</td>
+                    <td className={styles.valueCell}>
+                      <Input name="email" value={profile.email} onChange={handleInputChange} />
+                    </td>
+                  </tr>
+
+                  <tr className={styles.row}>
+                    <td className={styles.labelCell}>Address</td>
+                    <td className={styles.valueCell}>
+                      <Input name="address" value={profile.address} onChange={handleInputChange} />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
+            {/* LOGIN INFORMATION */}
+            <div>
+              <div className={styles.headerGreen}>Login Information</div>
+              <table className={styles.infoTable}>
+                <tbody>
+                  <tr className={styles.row}>
+                    <td className={styles.labelCell}>Login email</td>
+                    <td className={styles.valueCell}>
+                      <Input value={profile.loginEmail} disabled />
+                    </td>
+                  </tr>
 
-          {/* EDITABLE INFO */}
-          <div className="emp-profile__form">
-            <label>
-              <span>Full name</span>
-              <input name="fullname" value={form.fullname} onChange={handleChange} />
-            </label>
+                  <tr className={styles.row}>
+                    <td className={styles.labelCell}>Password</td>
+                    <td className={styles.valueCell}>
+                      <span className={styles.passwordMask}>********</span>
+                      <Button
+                        type="link"
+                        icon={<LockOutlined />}
+                        className={styles.changePasswordBtn}
+                        onClick={() => navigate('/employee/change-password')}
+                      >
+                        Change password
+                      </Button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
-            <label>
-              <span>Email</span>
-              <input name="email" value={form.email} onChange={handleChange} />
-            </label>
+            {/* ADDITIONAL INFORMATION */}
+            <div>
+              <div className={styles.headerGray}>Additional Information</div>
+              <table className={styles.infoTable}>
+                <tbody>
+                  <tr className={styles.row}>
+                    <td className={styles.labelCell}>Department</td>
+                    <td className={styles.valueCell}>
+                      <Input value={profile.department} disabled />
+                    </td>
+                  </tr>
 
-            <label>
-              <span>Phone</span>
-              <input name="phone" value={form.phone} onChange={handleChange} />
-            </label>
+                  <tr className={styles.row}>
+                    <td className={styles.labelCell}>Hire date</td>
+                    <td className={styles.valueCell}>
+                      <Input value={profile.hireDate} disabled />
+                    </td>
+                  </tr>
 
-            <label>
-              <span>Address</span>
-              <input name="address" value={form.address} onChange={handleChange} />
-            </label>
+                  <tr className={styles.row}>
+                    <td className={styles.labelCell}>Role</td>
+                    <td className={styles.valueCell}>
+                      <Input value={profile.role} disabled />
+                    </td>
+                  </tr>
 
-            <label>
-              <span>Date of birth</span>
-              <input type="date" name="dob" value={new Date(form.dob).toLocaleDateString("en-CA")} onChange={handleChange} />
-            </label>
+                  <tr className={styles.row}>
+                    <td className={styles.labelCell}>Status</td>
+                    <td className={styles.valueCell}>
+                      <Input value={profile.status} disabled />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
-            <label>
-              <span>Department</span>
-              <input
-                value={form.department}
-                disabled
-                className="emp-profile__input--readonly"
-              />
-            </label>
-
-            <label>
-              <span>Hire date</span>
-              <input
-                type="date"
-                value={new Date(form.hire_date).toLocaleDateString("en-CA")}
-                disabled
-                className="emp-profile__input--readonly"
-              />
-            </label>
-          </div>
-
-          {/* ACTIONS */}
-          <div className="emp-profile__actions">
-            <button className="emp-profile__btn" onClick={handleSave} disabled={loading}>
-              <BiSave />
-              {loading ? "Saving..." : "Save changes"}
-            </button>
-
-            <button
-              className="emp-profile__btn emp-profile__btn--secondary"
-              onClick={() => nav("/employee/change-password")}
-            >
-              <BiLockAlt />
-              Change Password
-            </button>
           </div>
         </div>
-      </main>
 
-      <Footer />
-    </>
+        <div className={styles.buttonGroup}>
+          <Button className={styles.btnSave} onClick={handleSave}>Save</Button>
+          <Button className={styles.btnCancel} 
+            onClick={() => navigate("/employee")}>Cancel</Button>
+        </div>
+      </div>
+      <Footer/>
+    </div>
   );
-}
+};
+
+export default Account;

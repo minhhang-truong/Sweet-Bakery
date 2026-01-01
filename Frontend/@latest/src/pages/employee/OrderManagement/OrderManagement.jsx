@@ -8,6 +8,7 @@ import OrderDetail from "../../../components/employee/OrderDetail/OrderDetail";
 import AddOrderModal from "../../../components/employee/AddOrderModal/AddOrderModal";
 import { generateOrderId } from "../../../lib/orders";
 import "./OrderManagement.css";
+import { useAuth } from "../../../context/AuthContext";
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 const STATUS_OPTIONS = [
@@ -20,6 +21,7 @@ const STATUS_OPTIONS = [
 
 const OrderManagement = () => {
   const { token } = theme.useToken();
+  const { user } = useAuth();
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -49,7 +51,8 @@ const OrderManagement = () => {
 
       message.success(`Order #${orderId} status changed to ${newStatus.toUpperCase()}`);
     } catch (err) {
-      message.error("Failed to update order status");
+      const backendError = err?.response?.data?.error || "Failed to update order status";
+      message.error(backendError);
       console.error(err);
       
       // Nếu thất bại → revert lại state
@@ -95,6 +98,7 @@ const OrderManagement = () => {
   // Hàm xử lý khi bấm Save ở Modal thêm mới
   const handleSaveNewOrder = async (newOrderData) => {
     try {
+      newOrderData.employee_id = user.id;
       newOrderData.id = generateOrderId();
       newOrderData.time.slot = newOrderData.time.slot.format("HH:mm");
       newOrderData.time.date = newOrderData.time.date.format("YYYY-MM-DD");
@@ -129,6 +133,7 @@ const OrderManagement = () => {
           receive_time: order.receive_time,
           address: order.receive_address,
           receiver: order.receiver,
+          method: order.payment,
         }));
 
         setOrders(formattedOrders);

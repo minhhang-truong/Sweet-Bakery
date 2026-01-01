@@ -40,19 +40,26 @@ module.exports.signin = async (req, res) => {
     }
 }
 
+module.exports.logout = async (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: false,
+    sameSite: "strict"
+  });
+  res.json({ message: "Logged out" });
+}
+
 module.exports.updateProfile = async (req, res) => {
     try {
         const userId = parseInt(req.params.id);
         if (req.user.id !== userId) {
             return res.status(403).json({ error: 'You do not have permission to update this profile' });
         }
-        // console.log(req.body);
         const result = await Account.updateEmployee(req.body, userId);
         if (!result) {
             return res.status(404).json({ error: "User not found" });
         }
-
-        res.json(result);
+        res.json({message: 'Update successfully!'});
     } catch (err) {
         console.error("Update failed:", err);
         res.status(500).json({ error: "Server error" });

@@ -80,6 +80,10 @@ const OrderDetail = ({ open, onCancel, order, detail, onStatusChange }) => {
                   <td className={styles.cell}>{order.receive_time}</td>
                 </tr>
                 <tr>
+                  <td className={styles.cellBold}>Method</td>
+                  <td className={styles.cell}>{order.method}</td>
+                </tr>
+                <tr>
                   <td className={styles.cellBold}>Note</td>
                   <td className={styles.cell}>{order.note}</td>
                 </tr>

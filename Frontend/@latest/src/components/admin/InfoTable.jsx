@@ -39,7 +39,7 @@ const InfoTable = ({ title, variant, data, editable = false, onValueChange }) =>
                   {/* EDIT MODE & NOT READONLY */}
                   {editable && !isReadOnly ? (
                     <input
-                      type="text"
+                      type={row.type || "text"}
                       value={row.value}
                       onChange={(e) =>
                         onValueChange?.(index, e.target.value)

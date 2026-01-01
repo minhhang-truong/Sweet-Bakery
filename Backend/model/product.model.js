@@ -80,8 +80,13 @@ class Product {
 
     static async deleteProduct(id) {
         try {
+            const category = await pool.query(`SELECT category_id FROM product WHERE id = $1`, [id]);
             const query = `DELETE FROM product WHERE id = $1`;
             await pool.query(query, [id]);
+            const items = await pool.query(`SELECT COUNT(name) FROM product WHERE category_id = $1`, [category.rows[0].category_id]);
+            if(Number(items.rows[0].count) == 0){
+                await pool.query(`DELETE FROM category WHERE id = $1`, [category.rows[0].category_id]);
+            }
         } catch (error) {
             console.error(error);
             throw error;
@@ -105,9 +110,9 @@ class Product {
     static async updateProduct(data) {
         try {
             const query = `UPDATE product
-                            SET name = $1, price = $2, description = $3, stock = $4, status = $5
-                            WHERE id = $6`;
-            const values = [data.productName, data.price, data.description, data.count, data.status, data.sku];
+                            SET name = $1, price = $2, description = $3, stock = $4, status = $5, images = $6
+                            WHERE id = $7`;
+            const values = [data.productName, data.price, data.description, data.count, data.status, data.image, data.sku];
             const res = await pool.query(query, values);
             return res.rows[0];
         } catch (error) {

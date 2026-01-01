@@ -14,13 +14,13 @@ const AddProductModal = ({
   const [data, setData] = useState(
     initialData || {
       productName: "",
-      price: "",
+      price: 0,
       category: "",
       description: "",
-      count: "",
+      count: 0,
       status: "Selling",
       sku: "",
-      originalPrice: "",
+      originalPrice: 0,
       image: "",
     }
   );
@@ -31,10 +31,10 @@ const AddProductModal = ({
 
       setData({
         productName: res.data.name,
-        price: res.data.price,
+        price: Number(res.data.price),
         category: res.data.category,
         description: res.data.description,
-        count: res.data.stock,
+        count: Number(res.data.stock),
         status: res.data.status,
         sku: res.data.id,
         originalPrice: res.data.original_price ? res.data.original_price : res.data.price,
@@ -163,14 +163,14 @@ const AddProductModal = ({
                     - Nếu isEditing: Cho phép kéo thả
                 */}
                 <div className={!isEditing ? "pointer-events-none opacity-90 grayscale-[0.1]" : ""}>
-                    <ImageUploadZone
-                        image={data.image}
-                        className="h-64 lg:h-80 shadow-inner bg-white rounded-xl border-2 border-dashed border-gray-300 hover:border-[#d32f2f] transition-colors cursor-pointer"
-                        onImageChange={(file) => {
-                            const url = URL.createObjectURL(file);
-                            setData((prev) => ({ ...prev, image: url }));
-                        }}
-                    />
+                  <ImageUploadZone
+                    image={data.image}
+                    className="h-64 lg:h-80 shadow-inner bg-white rounded-xl border-2 border-dashed border-gray-300 hover:border-[#d32f2f] transition-colors cursor-pointer"
+                    uploadEndpoint="/manager/upload/product"
+                    onImageUploaded={(url) => {
+                      setData((prev) => ({ ...prev, image: url }));
+                    }}
+                  />
                 </div>
                 
                 {/* Text hướng dẫn */}
@@ -236,9 +236,11 @@ const AddProductModal = ({
             <>
               <button 
                 onClick={() => {
-                   if(viewMode) setIsEditing(false);
-                   else onCancel();
-                   fetchProduct();
+                  if(viewMode) {
+                  setIsEditing(false);
+                  fetchProduct();
+                  }
+                  else onCancel();
                 }} 
                 className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-100 transition-colors"
               >

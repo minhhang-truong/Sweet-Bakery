@@ -7,6 +7,8 @@ const { authorize } = require('../../middleware/authorize.middleware');
 
 router.post("/signin", controller.signin);
 
+router.post("/logout", controller.logout);
+
 router.put("/profile/:id", verifyToken, authorize(2), controller.updateProfile);
 
 router.get("/profile/:id", verifyToken, authorize(2), controller.userProfile);

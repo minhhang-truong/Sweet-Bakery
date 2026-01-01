@@ -6,6 +6,8 @@ import RevenueReport from "../../pages/admin/RevenueReport";
 import ManagerLayout from "../../layouts/ManagerLayout.jsx";
 import SigninPages from "../../pages/admin/Login/SignIn.jsx";
 import NotFound from "../../pages/admin/NotFound.jsx";
+import Account from "../../pages/admin/Account/Account.jsx";
+import ChangePassword from "../../pages/admin/ChangePassword/ChangePassword.jsx";
 
 export const managerRoutes = [
     {
@@ -58,6 +60,26 @@ export const managerRoutes = [
             <ManagerLayout>
                 <ManagerRoute>
                     <RevenueReport />
+                </ManagerRoute>
+            </ManagerLayout>
+        ),
+    },
+    {
+        path: "/manager/profile",
+        element: (
+            <ManagerLayout>
+                <ManagerRoute>
+                    <Account />
+                </ManagerRoute>
+            </ManagerLayout>
+        ),
+    },
+    {
+        path: "/manager/change-password",
+        element: (
+            <ManagerLayout>
+                <ManagerRoute>
+                    <ChangePassword />
                 </ManagerRoute>
             </ManagerLayout>
         ),

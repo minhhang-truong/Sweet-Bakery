@@ -12,7 +12,7 @@ module.exports.getAllOrders = async (req, res) => {
 
 module.exports.getOrderDetail = async (req, res) => {
     try {
-        const detail = await Order.getOrderDatail(req.body.orderId);
+        const detail = await Order.getOrderDetail(req.body.orderId);
         res.json(detail);
     } catch (error) {
         console.error(error);
@@ -32,10 +32,11 @@ module.exports.createOrder = async (req, res) => {
 
 module.exports.updateOrderStatus = async (req, res) => {
     try {
-        await Order.updateOrderStatus(req.body);
+        const { orderId, status } = req.body;
+        await Order.updateOrderStatus({orderId, newStatus: status});
         res.status(200).json({ message: 'Order status updated successfully' });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(error.status).json({ error: error.message });
     }
 }
