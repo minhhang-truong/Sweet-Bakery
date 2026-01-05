@@ -1,0 +1,105 @@
+/* src/components/Sidebar.module.css */
+
+/* 1. Khung Sidebar chính */
+.sidebar {
+  width: 300px;          /* Chiều rộng cố định */
+  height: 100vh;         /* Chiều cao full màn hình */
+  background-color: #BC0000; /* Màu đỏ chủ đạo */
+  color: white;
+  
+  /* Flexbox để dàn trang: Logo trên, Menu giữa, Logout dưới cùng */
+  display: flex;
+  flex-direction: column;
+  
+  /* Cố định vị trí bên trái màn hình */
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100; /* Đảm bảo nổi lên trên các thành phần khác */
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1); /* Bóng đổ nhẹ sang phải */
+}
+
+/* 2. Logo Section */
+.logoContainer {
+  padding: 40px 0; /* Khoảng cách trên dưới */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* Đường kẻ mờ ngăn cách logo và menu */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3); 
+}
+
+.logoBox {
+  width: 80px;
+  height: 80px;
+  background-color: white; /* Nền trắng vuông bo góc */
+  border-radius: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 3. Menu Section */
+.menuContainer {
+  flex: 1; /* QUAN TRỌNG: Chiếm hết khoảng trống thừa để đẩy nút Logout xuống đáy */
+  display: flex;
+  flex-direction: column;
+  padding-top: 10px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  padding: 18px 25px; /* Khoảng cách trong nút bấm */
+  color: white;
+  text-decoration: none; /* Bỏ gạch chân link */
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  
+  /* Đường kẻ mờ giữa các mục menu */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2); 
+}
+
+/* Hiệu ứng khi di chuột vào link */
+.navItem:hover {
+  background-color: #990000; /* Đỏ đậm hơn */
+  padding-left: 30px; /* Hiệu ứng trượt nhẹ chữ sang phải */
+}
+
+/* Trạng thái Active (Đang chọn) */
+.active {
+  background-color: #800000; /* Màu nền đậm nhất khi active */
+  font-weight: bold;
+  border-left: 5px solid white; /* Vạch trắng đánh dấu bên trái */
+}
+
+.icon {
+  font-size: 22px;
+  margin-right: 15px; /* Khoảng cách giữa icon và chữ */
+}
+
+/* 4. Logout Section */
+.logoutContainer {
+  padding: 30px 20px; /* Padding xung quanh nút logout */
+}
+
+.logoutButton {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 50px; /* Bo tròn hình viên thuốc */
+  background-color: white;
+  color: #CC0000; /* Chữ màu đỏ */
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.logoutButton:hover {
+  transform: translateY(-3px); /* Nút bay lên nhẹ khi di chuột */
+  background-color: #f2f2f2;
+}

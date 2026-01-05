@@ -1,0 +1,80 @@
+:root{
+  --about-bg: #FFD8B4;   /* be cam nhạt */
+  --red: #BC0000;
+}
+
+/* ---------- About Us Section ---------- */
+.aboutUs{
+  display: grid;
+  grid-template-columns: 48% 52%;
+  background: var(--about-bg);
+  border: 1px solid rgba(0,0,0,.08);
+  overflow: clip;
+  max-height: 280px;
+}
+
+.aboutUs__media img{
+  width: 100%; 
+  height: 100%; 
+  object-fit: cover; 
+  display: block;
+  max-height: 280px;
+}
+
+.aboutUs__content{
+  padding: clamp(12px, 2.5vw, 24px);
+  display: grid; 
+  align-content: center; 
+  gap: 8px;
+}
+
+.aboutUs__title{
+  margin: 0;
+  font-family: "Georgia", serif;
+  font-weight: 700;
+  font-size: clamp(20px, 3vw, 32px);
+  color: var(--red);
+}
+
+.aboutUs__text{
+  margin: 0;
+  line-height: 1.4;
+  font-size: clamp(13px, 1.5vw, 15px);
+  color: #7a4a3a;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 980px){
+  .aboutUs{ 
+    grid-template-columns: 1fr;
+    max-height: none;
+  }
+  
+  .aboutUs__media img {
+    max-height: 240px;
+  }
+  
+  .aboutUs__content {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .aboutUs__content {
+    padding: 16px;
+    gap: 6px;
+  }
+  
+  .aboutUs__title {
+    font-size: clamp(18px, 4vw, 24px);
+  }
+  
+  .aboutUs__text {
+    font-size: clamp(12px, 2vw, 14px);
+    line-height: 1.5;
+  }
+  
+  .aboutUs__media img {
+    max-height: 200px;
+  }
+}

@@ -1,0 +1,53 @@
+:root{
+  --cream: #FFFBF4;
+  --red: #BC0000;
+  --red-dark: #a01313;
+  --white: #fff;
+  --ft-muted: #ffe6e6;
+}
+
+/* ---------- Red footer ---------- */
+.ftMain{
+  background: var(--red);
+  color: var(--white);
+  padding-top: 20px;
+}
+.ftGrid{
+  display: grid;
+  grid-template-columns: 1.2fr .9fr .9fr .9fr;
+  gap: clamp(12px, 2.5vw, 20px);
+  align-items: start;
+}
+
+.ftLogo{ width: 50px; height: 50px; object-fit: contain; display:block; }
+.ftBrandName{
+  margin: 6px 0 4px; font-family: "Georgia", serif;
+  font-weight: 700; font-size: 22px;
+}
+.ftColTitle{ margin: 4px 0 6px; font-weight: 700; font-size: 15px; }
+.ftList{ margin: 0; padding: 0; list-style: none; font-size: 14px; }
+.ftList li{ margin: 3px 0; }
+.ftList a{ color: var(--ft-muted); text-decoration: none; }
+.ftList a:hover{ text-decoration: underline; }
+
+.ftBadgeWrap{ display: flex; justify-content: flex-end; }
+.ftBadge{ width: 110px; height: auto; object-fit: contain; }
+
+.ftCopy{
+  text-align: right;
+  padding: 10px 0 14px;
+  font-size: 13px;
+  color: var(--ft-muted);
+  border-top: 1px solid rgba(255,255,255,.2);
+  margin-top: 14px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 980px){
+  .ftGrid{ grid-template-columns: 1fr 1fr; }
+  .ftBadgeWrap{ justify-content: flex-start; }
+  .ftCopy{ text-align: left; }
+}
+@media (max-width: 560px){
+  .ftGrid{ grid-template-columns: 1fr; }
+}

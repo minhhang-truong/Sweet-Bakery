@@ -1,0 +1,177 @@
+
+.historyPage {
+  background: #fff9f0;
+  min-height: 60vh;
+  padding: 48px 0 80px;
+}
+
+.historyHeader {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.historyEyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #c35b5b;
+  margin: 0 0 6px;
+  font-size: 12px;
+}
+
+.historyHeader h1 {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 40px);
+  font-family: "Georgia", serif;
+  color: #a32727;
+}
+
+.historySub {
+  margin: 12px 0 0;
+  color: #7d4b4b;
+}
+
+.historyTimeline {
+  display: grid;
+  gap: 20px;
+}
+
+.historyCard {
+  background: #fff;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f2d3d3;
+}
+
+.historyMeta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 18px;
+  margin-bottom: 16px;
+}
+
+.historyLabel {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #b35b5b;
+  margin-bottom: 4px;
+}
+
+.historyStatus {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #ffe6e6;
+  color: #c51616;
+}
+.historyStatus.is-delivered { background: #e7f6e8; color: #2a7b32; }
+.historyStatus.is-preparing { background: #fff2d7; color: #b46705; }
+.historyStatus.is-cancelled { background: #fce4e4; color: #c51616; }
+
+.historyItems {
+  border-top: 1px solid #f4dada;
+  padding-top: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.historyItemName {
+  margin: 0;
+  font-weight: 600;
+  color: #4a1f1f;
+}
+
+.historyItemMeta {
+  margin: 4px 0 0;
+  color: #7d4b4b;
+  font-size: 14px;
+}
+
+.historyEmpty {
+  background: #fff;
+  border-radius: 18px;
+  padding: 32px;
+  text-align: center;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.05);
+}
+.historyEmpty h1 {
+  margin-top: 0;
+  color: #a32727;
+}
+.historyEmpty p {
+  color: #7d4b4b;
+}
+
+@media (max-width: 768px) {
+  .historyPage {
+    padding: 32px 0 60px;
+  }
+  
+  .historyHeader {
+    margin-bottom: 24px;
+  }
+  
+  .historyHeader h1 {
+    font-size: clamp(22px, 5vw, 32px);
+  }
+  
+  .historyCard {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  
+  .historyMeta {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .historyItems {
+    padding-top: 12px;
+    gap: 8px;
+  }
+  
+  .historyItemName {
+    font-size: 0.95rem;
+  }
+  
+  .historyItemMeta {
+    font-size: 13px;
+  }
+  
+  .historyEmpty {
+    padding: 24px;
+    border-radius: 12px;
+  }
+  
+  .historyEmpty h1 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .historyPage {
+    padding: 24px 0 48px;
+  }
+  
+  .historyCard {
+    padding: 12px;
+  }
+  
+  .historyMeta {
+    gap: 10px;
+  }
+  
+  .historyLabel {
+    font-size: 11px;
+  }
+  
+  .historyStatus {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+}

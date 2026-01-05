@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Dancing+Script:wght@700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===================== */
+/* THEME VARIABLES */
+/* ===================== */
+@layer base {
+  .manager-root {
+    --background: 47 100% 96%;
+    --foreground: 0 0% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 15%;
+
+    --primary: 0 72% 51%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 43 74% 49%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 47 30% 90%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: 43 74% 49%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 145 63% 42%;
+    --success-foreground: 0 0% 100%;
+
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+
+    --warning: 0 85% 85%;
+    --warning-foreground: 0 0% 15%;
+
+    --border: 0 0% 85%;
+    --input: 0 0% 85%;
+    --ring: 0 72% 51%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 43 74% 49%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 43 74% 49%;
+    --sidebar-accent: 43 60% 45%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 43 60% 45%;
+    --sidebar-ring: 0 0% 100%;
+  }
+}
+
+/* ===================== */
+/* BASE STYLES (SCOPED) */
+/* ===================== */
+@layer base {
+  .manager-root * {
+    @apply border-border;
+  }
+
+  .manager-root {
+    @apply bg-background text-foreground;
+    font-family: 'Poppins', sans-serif;
+    min-height: 100vh;
+  }
+}
+
+/* ===================== */
+/* COMPONENTS */
+/* ===================== */
+@layer components {
+  .bakery-title {
+    font-family: 'Dancing Script', cursive;
+  }
+
+  .table-header-red {
+    @apply bg-primary text-primary-foreground font-semibold;
+  }
+
+  .table-header-green {
+    @apply bg-success text-success-foreground font-semibold;
+  }
+
+  .table-header-gray {
+    @apply bg-muted-foreground text-primary-foreground font-semibold;
+  }
+
+  .table-header-blue {
+    @apply bg-info text-info-foreground font-semibold;
+  }
+
+  .btn-save {
+    @apply bg-success text-success-foreground px-8 py-3 rounded-full font-semibold hover:opacity-90 transition-opacity;
+  }
+
+  .btn-cancel {
+    @apply bg-primary text-primary-foreground px-8 py-3 rounded-full font-semibold hover:opacity-90 transition-opacity;
+  }
+
+  .btn-add {
+    @apply bg-primary text-primary-foreground px-6 py-2 rounded-lg font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity;
+  }
+
+  .image-upload-zone {
+    @apply border-2 border-dashed border-muted-foreground/40 rounded-xl bg-muted/30 flex flex-col items-center justify-center;
+  }
+
+  .delete-confirm-overlay {
+    @apply fixed inset-0 z-[9999] flex items-center justify-center;
+    background-color: hsl(0 85% 85%);
+  }
+
+  .delete-success-overlay {
+    @apply fixed inset-0 z-[9999] flex items-center justify-center;
+    background-color: hsl(145 52% 90%);
+  }
+
+  .sidebar-slide {
+    @apply fixed left-0 top-0 h-full z-50 transition-transform duration-300 ease-in-out;
+  }
+
+  .sidebar-open {
+    @apply translate-x-0;
+  }
+
+  .sidebar-closed {
+    @apply -translate-x-full;
+  }
+}

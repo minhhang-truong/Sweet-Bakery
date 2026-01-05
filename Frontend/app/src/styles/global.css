@@ -1,0 +1,85 @@
+/* 1) Reset nhẹ & hộp tính kích thước dễ kiểm soát */
+.public-root,
+.public-root * ,
+.public-root *::before,
+.public-root *::after {
+  box-sizing: border-box;
+}
+
+/* 2) Cơ bản cho trang */
+body {
+  margin: 0;                                /* bỏ margin mặc định */
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: clamp(15px, 1.2vw, 16px);
+  line-height: 1.6;                         /* khoảng cách dòng thoáng */
+  color: #2b2b2b;                           /* màu chữ tối, dễ đọc */
+  background: #FFF9EB;                      /* nền sáng đơn giản */
+  min-height: 100vh;
+}
+
+main {
+  width: 100%;
+  min-height: 50vh;
+}
+
+/* 3) Ảnh responsive: không tràn khỏi khung chứa */
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* 4) Container trung tâm, rộng tối đa 1120px */
+.container {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-left: clamp(16px, 4vw, 32px);
+  padding-right: clamp(16px, 4vw, 32px);
+}
+
+/* 5) Liên kết: màu dễ thấy, underline khi hover/focus */
+a {
+  color: #1a73e8;
+  text-decoration: none;
+}
+a:hover,
+a:focus-visible {
+  text-decoration: underline;
+}
+
+/* 6) Tiêu đề chính hay dùng */
+h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin: 0.5rem 0;
+}
+
+/* 7) Nút cơ bản + trạng thái focus thân thiện */
+button {
+  font: inherit;                 /* dùng cùng font với body */
+  padding: 0.6em 1em;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  background: #f6f8fa;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+button:hover {
+  background: #eef2f6;
+  transform: translateY(-1px);
+}
+button:focus-visible {
+  outline: 2px solid #1a73e8;
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  body {
+    line-height: 1.5;
+  }
+
+  h1 {
+    font-size: clamp(24px, 6vw, 32px);
+  }
+}
