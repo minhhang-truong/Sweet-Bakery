@@ -79,3 +79,20 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
+
+/* Màu nền và viền khi được chọn */
+.switch-button .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
+  background-color: #f50 !important;
+  border-color: #f50 !important;
+}
+
+/* Màu khi di chuột vào ô đang được chọn */
+.switch-button .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled):hover {
+  background-color: #d4380d !important; /* Màu cam đậm hơn chút */
+  border-color: #d4380d !important;
+}
+
+/* Màu chữ khi di chuột vào ô CHƯA được chọn */
+.switch-button .ant-radio-button-wrapper:hover {
+  color: #f50;
+}

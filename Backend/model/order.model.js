@@ -82,6 +82,28 @@ class Order {
         }
     }
 
+    static async getAllOrdersByReceiveDate(data){
+        try {
+            const query = `SELECT orders.id,
+                                    COALESCE(fullname, receiver) AS fullname,
+                                    receive_phone, ordertime, total_amount, orders.status,
+                                    receive_date, receive_time, receive_address, receiver,
+                                    COALESCE(phone, receive_phone) AS phone,
+                                    payment, note, employee_note
+                                    FROM orders
+                           LEFT JOIN customer ON orders.customer_id = customer.user_id
+                           LEFT JOIN useraccount ON customer.user_id = useraccount.id
+                           WHERE receive_date = $1
+                           ORDER BY receive_time;`
+            const value = [data]
+            const res = await pool.query(query, value);
+            return res.rows;
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
     static async getOrderDetail(orderId) {
         try {
             const query = `SELECT prod_id, quantity, p.price FROM orderline o

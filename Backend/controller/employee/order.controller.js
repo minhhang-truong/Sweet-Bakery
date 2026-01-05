@@ -2,8 +2,13 @@ const Order = require('../../model/order.model');
 
 module.exports.getAllOrders = async (req, res) => {
     try {
-        const orders = await Order.getAllOrdersByDate(req.body.date);
-        res.json(orders);
+        if(req.body.filterType === 'order_date') {
+            const orders = await Order.getAllOrdersByDate(req.body.date);
+            res.json(orders);
+        }else{
+            const orders = await Order.getAllOrdersByReceiveDate(req.body.date);
+            res.json(orders);
+        }
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal Server Error' });
