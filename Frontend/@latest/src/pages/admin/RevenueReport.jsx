@@ -119,9 +119,10 @@ const RevenueReport = () => {
   /* ===================== WEEKLY (SEMI-STATIC) ===================== */
   const fetchWeeklyRevenue = async () => {
     const today = dayjs();
+    const day = today.day();
+    const diffToMonday = day === 0 ? -6 : 1 - day;
     const startOfWeek = today
-          .startOf("week")
-          .add(1, "day")
+          .add(diffToMonday, "day")
           .format("YYYY-MM-DD");
 
     const res = await api.get("/manager/revenue/weekly", {

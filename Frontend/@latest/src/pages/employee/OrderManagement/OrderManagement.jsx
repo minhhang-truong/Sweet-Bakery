@@ -134,6 +134,8 @@ const OrderManagement = () => {
           address: order.receive_address,
           receiver: order.receiver,
           method: order.payment,
+          note: order.note,
+          internal_note: order.employee_note,
         }));
 
         setOrders(formattedOrders);

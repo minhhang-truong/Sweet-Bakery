@@ -40,3 +40,15 @@ module.exports.updateOrderStatus = async (req, res) => {
         res.status(error.status).json({ error: error.message });
     }
 }
+
+module.exports.updateInternalNote = async (req, res) => {
+    try {
+        const id = req.params.id;
+        console.log(id, req.body.internal_note);
+        await Order.updateInternalNote(id, req.body.internal_note);
+        res.status(200).json({ message: 'Internal note updated successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(error.status).json({ error: error.message });
+    }
+}

@@ -1,4 +1,4 @@
-const InfoTable = ({ title, variant, data, editable = false, onValueChange }) => {
+const InfoTable = ({ title, variant, data, editable = false, errors = {}, onValueChange }) => {
   const headerClass = {
     red: "table-header-red",
     green: "table-header-green",
@@ -38,16 +38,26 @@ const InfoTable = ({ title, variant, data, editable = false, onValueChange }) =>
                 <td className="py-2 px-4">
                   {/* EDIT MODE & NOT READONLY */}
                   {editable && !isReadOnly ? (
+                    <>
                     <input
                       type={row.type || "text"}
                       value={row.value}
                       onChange={(e) =>
                         onValueChange?.(index, e.target.value)
                       }
-                      className="w-full bg-transparent text-sm
-                                 border-b border-transparent
-                                 focus:border-primary focus:outline-none"
+                      className={`w-full bg-transparent text-sm
+                                border-b
+                                ${errors[row.key]
+                                  ? "border-red-500"
+                                  : "border-transparent"}
+                                focus:outline-none focus:border-primary`}
                     />
+                    {errors[row.key] && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {errors[row.key]}
+                      </p>
+                    )}
+                    </>
                   ) : (
                     /* VIEW MODE OR READONLY */
                     <span

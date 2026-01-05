@@ -32,7 +32,7 @@ class Revenue {
         }
     }
 
-    static async getWeeklyRevenue(startOfDate, date) {
+    static async getWeeklyRevenue(startOfWeek, date) {
         try {
             const query = `WITH days AS (
                                 SELECT generate_series(
@@ -45,9 +45,10 @@ class Revenue {
                             FROM days d
                             LEFT JOIN orders o
                             ON o.orderdate = d.day
+                            WHERE status = 'completed' OR status IS NULL
                             GROUP BY d.day
                             ORDER BY d.day`;
-            const values = [startOfDate, date];
+            const values = [startOfWeek, date];
             const res = await pool.query(query, values);
             return res.rows;
         } catch (error) {

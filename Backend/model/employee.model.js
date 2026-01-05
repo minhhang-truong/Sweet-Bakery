@@ -21,10 +21,11 @@ class Employee {
             const res = await pool.query(query1, values1);
             const userId = res.rows[0].id;
 
-            const query2 = `INSERT INTO employee(user_id, fullname, dob, gender, avatar, address, department, id, manager_id) VALUES
-                        ($1, $2, $3, $4, $5, $6, $7, $8, 1)`;
-            const values2 = [userId, data.fullName, data.dob, data.gender, data.avatar, data.address, data.department, data.empId];
+            const query2 = `INSERT INTO employee(user_id, fullname, gender, avatar, address, department, id, manager_id) VALUES
+                        ($1, $2, $3, $4, $5, $6, $7, 1)`;
+            const values2 = [userId, data.fullName, data.gender, data.avatar, data.address, data.department, data.empId];
             await pool.query(query2, values2);
+            if(data.dob.length !== 0) await pool.query(`UPDATE employee SET dob = $1 WHERE user_id = $2`, [data.dob, userId]);
         } catch (error) {
             console.error('Error adding employee: ', error);
             throw error;

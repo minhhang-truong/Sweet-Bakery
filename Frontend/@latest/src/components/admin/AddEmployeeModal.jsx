@@ -29,6 +29,14 @@ const AddEmployeeModal = ({
     }
   );
 
+  const REQUIRED_FIELDS = [
+    "fullName",
+    "loginEmail",
+    "password",
+    "empId",
+  ];
+
+
   const fetchEmployee = async () => {
     try {
       const res = await api.get(`/manager/employees/details/${data.empId}`);
@@ -64,8 +72,25 @@ const AddEmployeeModal = ({
   // State cho thông báo Save thành công
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const validateRequiredFields = () => {
+    const newErrors = {};
+
+    REQUIRED_FIELDS.forEach((field) => {
+      if (!data[field] || !String(data[field]).trim()) {
+        newErrors[field] = "This field is required";
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSaveAction = async () => {
+    setErrors({});
+
+    if (!validateRequiredFields()) return;
     try {
       setShowError(false);
 
@@ -90,7 +115,7 @@ const AddEmployeeModal = ({
     { label: "Full name", value: data.fullName, key: "fullName", readOnly: viewMode },
     { label: "Gender", value: data.gender, key: "gender", readOnly: viewMode },
     { label: "Date of Birth", value: viewMode
-    ? new Date(data.dob).toLocaleDateString()
+    ? (data.dob ? new Date(data.dob).toLocaleDateString() : '')
     : (data.dob
         ? data.dob.split("/").reverse().join("-")
         : ""), key: "dob", readOnly: viewMode, type: 'date' },
@@ -198,6 +223,7 @@ const AddEmployeeModal = ({
                 variant="red"
                 data={personalInfo}
                 editable={isEditing}
+                errors={errors}
                 onValueChange={(idx, value) => handleValueChange(personalInfo[idx].key, value)}
               />
 
@@ -206,6 +232,7 @@ const AddEmployeeModal = ({
                 variant="green"
                 data={loginInfo}
                 editable={isEditing}
+                errors={errors}
                 onValueChange={(idx, value) => handleValueChange(loginInfo[idx].key, value)}
               />
 

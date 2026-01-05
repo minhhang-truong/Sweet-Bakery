@@ -123,11 +123,13 @@ class Account {
             const result = await pool.query(query, values);
             const query2 = `
                         UPDATE customer
-                        SET fullname = $1, address = $2, dob = $4
+                        SET fullname = $1, address = $2
                         WHERE user_id = $3
                         RETURNING fullname, address;`;
-            const values2 = [data.name, data.address, data.id, data.dob];
+            const values2 = [data.name, data.address, data.id];
             const user = await pool.query(query2, values2);
+            let d = '';
+            if(data.dob.length !== 0) d = await pool.query(`UPDATE customer SET dob = $1 WHERE user_id = $2 RETURNING dob`,[data.dob, data.id]);
             return {
                 id: result.rows[0].id,
                 email: result.rows[0].email,

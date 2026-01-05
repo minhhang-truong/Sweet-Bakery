@@ -67,7 +67,7 @@ class Order {
                                     receive_phone, ordertime, total_amount, orders.status,
                                     receive_date, receive_time, receive_address, receiver,
                                     COALESCE(phone, receive_phone) AS phone,
-                                    payment
+                                    payment, note, employee_note
                                     FROM orders
                            LEFT JOIN customer ON orders.customer_id = customer.user_id
                            LEFT JOIN useraccount ON customer.user_id = useraccount.id
@@ -217,6 +217,15 @@ class Order {
             await pool.query("ROLLBACK");
             console.error(err);
             throw err;
+        }
+    }
+
+    static async updateInternalNote(id, internal_note) {
+        try {
+            await pool.query(`UPDATE orders SET employee_note = $1 WHERE id = $2`, [internal_note, id]);
+        } catch (error) {
+            console.error(error);
+            throw error;
         }
     }
 }

@@ -125,9 +125,9 @@
   color: var(--primary-dark);
 }
 
-.acc__side .acc__card{ 
-  /* Removed sticky positioning */
-}
+/* .acc__side .acc__card{ 
+  
+} */
 
 @media (max-width: 920px){
   .account{ padding: 16px 0 32px; }

@@ -58,8 +58,40 @@ const AddProductModal = ({
 
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const REQUIRED_FIELDS = [
+    "productName",
+    "price",
+    "category",
+    "sku",
+    "count",
+    "image",
+  ];
+
+  const validateRequiredFields = () => {
+    const newErrors = {};
+
+    REQUIRED_FIELDS.forEach((field) => {
+      if (
+        data[field] === undefined ||
+        data[field] === null ||
+        data[field] === "" ||
+        (typeof data[field] === "string" && !data[field].trim())
+      ) {
+        newErrors[field] = "This field is required";
+      }
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSaveAction = async () => {
+    setErrors({});
+
+    if (!validateRequiredFields()) return;
+
     try {
       setShowError(false);
 
@@ -172,6 +204,13 @@ const AddProductModal = ({
                     }}
                   />
                 </div>
+
+                {/* ❗ ERROR IMAGE HIỂN THỊ Ở ĐÂY */}
+                {errors.image && (
+                  <p className="text-sm text-red-500 mt-2 text-center">
+                    {errors.image}
+                  </p>
+                )}
                 
                 {/* Text hướng dẫn */}
                 {isEditing && (
@@ -189,7 +228,8 @@ const AddProductModal = ({
                 title="Main Information" 
                 variant="red" 
                 data={mainInfo} 
-                editable={isEditing} 
+                editable={isEditing}
+                errors={errors}
                 onValueChange={(idx, v) => handleValueChange(mainInfo[idx].key, v)} 
               />
               
@@ -197,7 +237,8 @@ const AddProductModal = ({
                 title="Stock Management" 
                 variant="green" 
                 data={stockInfo} 
-                editable={isEditing} 
+                editable={isEditing}
+                errors={errors}
                 onValueChange={(idx, v) => handleValueChange(stockInfo[idx].key, v)} 
               />
               

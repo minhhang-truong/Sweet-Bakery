@@ -1,7 +1,9 @@
 // src/components/employee/OrderDetail.jsx
 import React from 'react';
+import { useEffect, useState } from 'react';
 import { Modal, Row, Col, Input, Button, Tag, Select } from 'antd';
 import styles from './OrderDetail.module.css';
+import api from "../../../lib/axiosEmployee";
 
 const { TextArea } = Input;
 
@@ -17,6 +19,9 @@ const OrderDetail = ({ open, onCancel, order, detail, onStatusChange }) => {
   // Nếu chưa chọn order nào thì không render gì cả
   if (!order) return null;
 
+  const [internalNote, setInternalNote] = useState("");
+  const [saving, setSaving] = useState(false);
+
   const shippingCost = () => {
     let cost = Number(order.total.replace(/\D/g, ""));
     for (let item of detail) {
@@ -24,6 +29,28 @@ const OrderDetail = ({ open, onCancel, order, detail, onStatusChange }) => {
     }
     return cost;
   }
+
+  useEffect(() => {
+    if (order?.internal_note) {
+      setInternalNote(order.internal_note);
+    } else {
+      setInternalNote("");
+    }
+  }, [order]);
+
+  const saveInternalNote = async () => {
+    try {
+      setSaving(true);
+      await api.put(`/employee/order/${order.id}/internal-note`, {
+        internal_note: internalNote,
+      });
+      onCancel();
+    } catch (err) {
+      console.error('Failed to save internal note', err);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Modal
@@ -129,12 +156,21 @@ const OrderDetail = ({ open, onCancel, order, detail, onStatusChange }) => {
         {/* Internal Note */}
         <div className={styles.noteContainer}>
           <div className={styles.noteHeader}>Internal Note</div>
-          <TextArea rows={4} style={{ borderRadius: 0 }} />
+          <TextArea
+            rows={4}
+            value={internalNote}
+            onChange={(e) => setInternalNote(e.target.value)}
+            placeholder="Add internal note for this order..."
+            style={{ borderRadius: 0 }}
+          />
         </div>
 
         {/* Footer Buttons */}
-        <div style={{ textAlign: 'right', marginTop: 20 }}>
-          <Button type="primary" danger onClick={onCancel}>Close</Button>
+        <div style={{ textAlign: 'right', marginTop: 20, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <Button onClick={onCancel}>Cancel</Button>
+          <Button type="primary" loading={saving} onClick={saveInternalNote}>
+            Save Note
+          </Button>
         </div>
       </div>
     </Modal>
