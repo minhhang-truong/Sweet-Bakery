@@ -8,5 +8,6 @@ module.exports.connect = async () => {
     }
     catch (error) {
         console.error('Database connection error');
+        throw error;
     }
 }
