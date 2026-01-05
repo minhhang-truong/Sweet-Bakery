@@ -1,4 +1,4 @@
-import "./ChangePassWord.css"; //Change here
+import "./ChangePassWord.css"; //Change here to deploy
 import { useState } from "react";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
