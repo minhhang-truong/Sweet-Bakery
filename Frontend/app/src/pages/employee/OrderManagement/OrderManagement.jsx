@@ -1,6 +1,6 @@
 // src/pages/OrderManagement.jsx
 import { useEffect, useState } from "react";
-import { Table, Tag, Calendar, theme, message, Select } from "antd";
+import { Table, Tag, Calendar, theme, message, Select, Radio } from "antd";
 import axios from "axios";
 import api from "../../../lib/axiosEmployee";
 import dayjs from "dayjs";
@@ -30,6 +30,8 @@ const OrderManagement = () => {
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
   const [isAddOrderOpen, setIsAddOrderOpen] = useState(false);
+
+  const [viewMode, setViewMode] = useState('order_date');
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
@@ -64,21 +66,26 @@ const OrderManagement = () => {
     { title: "Order ID", dataIndex: "id", key: "id" },
     { title: "Customer", dataIndex: "customer", key: "customer" },
     { title: "Phone", dataIndex: "phone", key: "phone" },
-    { title: "Order Time", dataIndex: "time", key: "time" },
+    { 
+      // Đổi tiêu đề cột dựa trên viewMode
+      title: viewMode === 'order_date' ? "Order Time" : "Receiving Time", 
+      // Đổi trường dữ liệu hiển thị (time hoặc receive_time)
+      dataIndex: viewMode === 'order_date' ? "time" : "receive_time", 
+      key: "time_display" 
+    },
     { title: "Total", dataIndex: "total", key: "total" },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
       render: (status, record) => (
-        // Bọc div và stopPropagation để khi bấm dropdown không bị mở Modal chi tiết
         <div onClick={(e) => e.stopPropagation()}>
           <Select
             defaultValue={status}
-            value={status} // Buộc Select hiển thị giá trị mới nhất từ state
+            value={status}
             style={{ width: 140 }}
             onChange={(newVal) => handleStatusChange(record.id, newVal)}
-            variant="borderless" // Bỏ viền cho giống thiết kế "Tag" hơn
+            variant="borderless"
           >
             {STATUS_OPTIONS.map((opt) => (
               <Select.Option key={opt.value} value={opt.value}>
@@ -115,22 +122,28 @@ const OrderManagement = () => {
     }
   }
 
-  const fetchOrders = async (date) => {
+  const fetchOrders = async (date, mode) => {
       try {
         setLoading(true);
+        // Gửi thêm filterType xuống backend
         const res = await api.post(`/employee/order`, {
           date: date.format("YYYY-MM-DD"),
+          filterType: mode // 'order_date' hoặc 'receive_date'
         });
+        
         const formattedOrders = res.data.map((order) => ({
           id: order.id,
           customer: order.fullname,
           phone: order.phone,
           receive_phone: order.receive_phone,
-          time: order.ordertime.split(".")[0],
+          time: order.ordertime ? order.ordertime.split(".")[0] : "", // Giờ đặt
+          
+          // Format lại giờ nhận để hiển thị đẹp hơn nếu cần
+          receive_time: order.receive_time, // Giả sử backend trả về string HH:mm
+          
           total: `${order.total_amount.toLocaleString()} đ`,
           status: order.status ?? "confirmed",
           receive_date: new Date(order.receive_date).toLocaleDateString(),
-          receive_time: order.receive_time,
           address: order.receive_address,
           receiver: order.receiver,
           method: order.payment,
@@ -149,8 +162,8 @@ const OrderManagement = () => {
 
   // Fetch orders from backend
   useEffect(() => {
-    fetchOrders(selectedDate);
-  }, [selectedDate]);
+    fetchOrders(selectedDate, viewMode);
+  }, [selectedDate, viewMode]);
 
   const handleDateSelect = (date) => {
     setSelectedDate(date);
@@ -189,16 +202,31 @@ const OrderManagement = () => {
       </div>
 
       <div className="order-header">
-        <h3 className="order-header-title">DAY'S ORDERS</h3>
+        <h3 className="order-header-title">
+            {viewMode === 'order_date' ? "ORDERS PLACED ON" : "ORDERS TO DELIVER ON"}
+        </h3>
         <Tag className="order-date-tag" color="#f50">
           {selectedDate.format("MM/DD/YYYY")}
         </Tag>
       </div>
 
+      {/* 5. THÊM NÚT CHUYỂN ĐỔI (SWITCHER) */}
+      <div style={{ marginBottom: 16 }}>
+        <Radio.Group 
+            className="switch-button"
+            value={viewMode} 
+            onChange={(e) => setViewMode(e.target.value)}
+            buttonStyle="solid"
+        >
+            <Radio.Button value="order_date">By Order Date</Radio.Button>
+            <Radio.Button value="receive_date">By Delivery Date</Radio.Button>
+        </Radio.Group>
+      </div>
+
       <div className="order-content">
         <div className="order-table">
           <Table
-            columns={columns}
+            columns={columns} // Columns đã được cập nhật dynamic ở trên
             dataSource={orders}
             loading={loading}
             rowKey="id"
@@ -212,8 +240,8 @@ const OrderManagement = () => {
           />
         </div>
 
-        <div className = "right-side-bar">
-
+        {/* ... (Phần Right Sidebar giữ nguyên) */}
+         <div className = "right-side-bar">
           <button 
             className= "add-order-button"
             onClick = { () => setIsAddOrderOpen(true)}>
@@ -236,6 +264,7 @@ const OrderManagement = () => {
         </div>
       </div>
 
+      {/* ... (Các Modal giữ nguyên) */}
       <OrderDetail
         open={isModalOpen}
         onCancel={handleCloseModal}
@@ -249,7 +278,6 @@ const OrderManagement = () => {
         onCancel={() => setIsAddOrderOpen(false)}
         onSave={handleSaveNewOrder}
       />
-
     </div>
   );
 };
