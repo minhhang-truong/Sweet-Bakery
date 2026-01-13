@@ -174,10 +174,10 @@ const OrderDetail = ({ open, onCancel, order, detail, onStatusChange }) => {
               </tbody>
             </table>
 
-            <div className={styles.shippingRow}>
+            {/*<div className={styles.shippingRow}>
               <span>Shipping Cost</span>
               <span>{shippingCost().toLocaleString()} đ</span>
-            </div>
+            </div>*/}
             <div className={styles.totalRow}>
               <span className={styles.totalLabel}>Total</span>
               <span className={styles.totalValue}>

@@ -1,7 +1,6 @@
 const pool = require('../config/pool');
 
 class Order {
-    // --- 1. TẠO ĐƠN HÀNG ---
     static async createOrder(data) {
         const client = await pool.connect();
         try {
@@ -90,7 +89,7 @@ class Order {
                            'qty', od.quantity,
                            'price', od.price,
                            'name', p.name,
-                           'image', p.image
+                           'image', p.images
                        )) as items
                 FROM app.orders o
                 LEFT JOIN app.order_line od ON o.order_id = od.order_id
@@ -106,11 +105,112 @@ class Order {
             throw error;
         }
     }
+    
+    static async getAllOrdersByDate(date) {
+        try {
+            const query = `
+                SELECT o.order_id as id,
+                       o.total_amount,
+                       o.order_time as ordertime,
+                       o.receive_time,
+                       o.status,
+                       o.payment,
+                       o.note,
+                       
+                       o.receiver_name as receiver,
+                       o.receiver_phone,
+                       o.receiver_phone as receive_phone,
+                       CONCAT(o.receiver_street, ', ', o.receiver_ward, ', ', o.receiver_district, ', ', o.receiver_city) as receive_address,
+                       
+                       CONCAT(ua.first_name, ' ', ua.last_name) as fullname,
+                       ua.phone as phone
 
-    // --- 4. LẤY TẤT CẢ ĐƠN (Cho Employee/Admin) ---
-    static async getAllOrders() {
-        const res = await pool.query(`SELECT * FROM app.orders ORDER BY order_time DESC`);
-        return res.rows;
+                FROM app.orders o
+                LEFT JOIN app.customer c ON o.customer_id = c.user_id
+                LEFT JOIN app.user_account ua ON c.user_id = ua.user_id
+                
+                WHERE DATE(o.order_time) = $1
+                ORDER BY o.order_time DESC
+            `;
+            const res = await pool.query(query, [date]);
+            return res.rows;
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
+    static async getAllOrdersByReceiveDate(date) {
+        try {
+            const query = `
+                SELECT o.order_id as id,
+                       o.total_amount,
+                       o.order_time as ordertime,
+                       o.receive_time,
+                       o.status,
+                       o.payment,
+                       o.note,
+                       
+                       o.receiver_name as receiver,
+                       o.receiver_phone,
+                       o.receiver_phone as receive_phone,
+                       CONCAT(o.receiver_street, ', ', o.receiver_ward, ', ', o.receiver_district, ', ', o.receiver_city) as receive_address,
+                       
+                       CONCAT(ua.first_name, ' ', ua.last_name) as fullname,
+                       ua.phone as phone
+
+                FROM app.orders o
+                LEFT JOIN app.customer c ON o.customer_id = c.user_id
+                LEFT JOIN app.user_account ua ON c.user_id = ua.user_id
+                
+                WHERE DATE(o.receive_time) = $1
+                ORDER BY o.receive_time ASC
+            `;
+            const res = await pool.query(query, [date]);
+            return res.rows;
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
+    static async getOrderDetail(orderId) {
+        try {
+            // SỬA: Query từ bảng order_line
+            const query = `
+                SELECT p.id as prod_id, 
+                       p.name, 
+                       p.images, 
+                       ol.quantity, 
+                       ol.price
+                FROM app.order_line ol
+                JOIN app.product p ON ol.product_id = p.id
+                WHERE ol.order_id = $1
+            `;
+            const res = await pool.query(query, [orderId]);
+            return res.rows;
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
+    static async updateOrderStatus({ orderId, newStatus }) {
+        try {
+            const query = `UPDATE app.orders SET status = $1 WHERE order_id = $2`;
+            await pool.query(query, [newStatus, orderId]);
+        } catch (error) {
+            throw error;
+        }
+    }
+    
+    static async updateInternalNote(orderId, note) {
+        try {
+            const query = `UPDATE app.orders SET note = $1 WHERE order_id = $2`; 
+            await pool.query(query, [note, orderId]);
+        } catch (error) {
+            throw error;
+        }
     }
 }
 

@@ -1,6 +1,6 @@
 // src/pages/OrderManagement.jsx
 import { useEffect, useState } from "react";
-import { Table, Tag, Calendar, theme, message, Radio } from "antd"; // Bỏ Select ở đây nếu không dùng trong table
+import { Table, Tag, Calendar, theme, message, Radio } from "antd"; 
 import api from "../../../lib/axiosEmployee";
 import dayjs from "dayjs";
 import OrderDetail from "../../../components/employee/OrderDetail/OrderDetail";
@@ -133,10 +133,14 @@ const OrderManagement = () => {
       render: (price) => `${Number(price).toLocaleString()} đ`
     },
     {
-      title: 'Order Time',
-      dataIndex: 'ordertime',
-      key: 'ordertime',
-      render: (date) => new Date(date).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'})
+      // --- SỬA ĐỔI: Thay đổi tiêu đề và dataIndex dựa trên filterType ---
+      title: filterType === 'receive_date' ? 'Receive Time' : 'Order Time',
+      dataIndex: filterType === 'receive_date' ? 'receive_time' : 'ordertime',
+      key: 'time_col',
+      render: (date) => {
+          if (!date) return 'N/A';
+          return new Date(date).toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'});
+      }
     },
     {
       title: 'Status',
@@ -146,7 +150,7 @@ const OrderManagement = () => {
           // 1. Tìm object màu tương ứng
           const statusObj = STATUS_OPTIONS.find(opt => opt.value === status) || { color: 'default', label: status };
           
-          // 2. Render bằng thẻ TAG để hiện màu (Sửa lại chỗ này)
+          // 2. Render bằng thẻ TAG để hiện màu
           return (
             <Tag color={statusObj.color} style={{ fontWeight: 'bold' }}>
               {statusObj.label}
@@ -197,11 +201,11 @@ const OrderManagement = () => {
 
         {/* Right Sidebar */}
          <div className = "right-side-bar">
-          <button 
+          {/*<button 
             className= "add-order-button"
             onClick = { () => setIsAddOrderOpen(true)}>
             ADD ORDER
-          </button>
+          </button>*/}
 
           <div
             className="order-calendar"
@@ -229,11 +233,11 @@ const OrderManagement = () => {
       />
 
       {/* Add Order Modal */}
-      <AddOrderModal
+      {/*<AddOrderModal
         open={isAddOrderOpen}
         onCancel={() => setIsAddOrderOpen(false)}
         onSave={handleSaveNewOrder}
-      />
+      />*/}
     </div>
   );
 };

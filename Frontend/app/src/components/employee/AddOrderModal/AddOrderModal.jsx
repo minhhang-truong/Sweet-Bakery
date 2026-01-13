@@ -13,23 +13,26 @@ const AddOrderModal = ({ open, onCancel, onSave }) => {
     receiver: {
       name: '',
       phone: '',
-      address: '',
+      // Tách địa chỉ thành 4 phần
+      street: '',
+      ward: '',
+      district: '',
+      city: ''
     },
     note: ''
   });
 
   const [items, setItems] = useState([]);
-  const [paymentMethod, setPaymentMethod] = useState('cash'); // Mặc định chữ thường
+  const [paymentMethod, setPaymentMethod] = useState('cash'); 
   const [deliveryDate, setDeliveryDate] = useState(dayjs());
   const [deliveryTime, setDeliveryTime] = useState(dayjs());
   
   // State cho tìm kiếm sản phẩm
   const [isProductPickerOpen, setIsProductPickerOpen] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [products, setProducts] = useState([]); // List sản phẩm từ API
+  const [products, setProducts] = useState([]); 
   const [filteredProducts, setFilteredProducts] = useState([]);
 
-  // Lấy danh sách sản phẩm khi mở modal
   useEffect(() => {
     if (open) {
       fetchProducts();
@@ -48,24 +51,21 @@ const AddOrderModal = ({ open, onCancel, onSave }) => {
 
   const fetchProducts = async () => {
       try {
-          // Gọi API lấy menu (API này không cần auth hoặc quyền staff)
           const res = await api.get('/employee/menu'); 
           setProducts(res.data);
           setFilteredProducts(res.data);
       } catch (error) {
           console.error("Failed to fetch products", error);
-          message.error("Failed to load product list");
       }
   }
 
-  // --- HÀM HELPER TẠO ID ĐÚNG CHUẨN DB MỚI ---
   const generateOrderId = () => {
     const numbers = "0123456789";
     let res = "ORD"; 
     for(let i = 0; i < 9; i++){
         res += numbers.charAt(Math.floor(Math.random() * numbers.length));
     }
-    return res; // Ví dụ: ORD123456789
+    return res;
   };
 
   const handleAddProductToCart = (product) => {
@@ -91,29 +91,23 @@ const AddOrderModal = ({ open, onCancel, onSave }) => {
   }
 
   const handleSave = async () => {
-    // Validate cơ bản
-    if (!customerInfo.receiver.name || !customerInfo.receiver.phone) {
-      return message.error('Please enter receiver name and phone');
-    }
-    if (items.length === 0) {
-      return message.error('Please add at least one product');
-    }
+    // Validate
+    const { name, phone, street, ward, district, city } = customerInfo.receiver;
+    if (!name || !phone) return message.error('Receiver name and phone are required');
+    if (!street || !ward || !district || !city) return message.error('Full address is required');
+    if (items.length === 0) return message.error('Please add at least one product');
 
-    // Giả lập Customer ID (Nếu hệ thống có chọn khách hàng thì lấy ID thật)
-    // Nếu là khách vãng lai, backend cần xử lý. Ở đây tạm gửi 0 hoặc ID khách vãng lai mặc định
-    // Lưu ý: DB bắt buộc customer_id. Bạn nên có logic chọn User hoặc tạo User nhanh.
-    // Tạm thời mình để cus_id là null để backend xử lý (nếu backend cho phép) hoặc bạn phải fix cứng 1 ID khách vãng lai trong DB.
-    // Tuy nhiên, theo model bạn gửi, cus_id là bắt buộc. 
-    // GỢI Ý: Hãy tạo sẵn 1 user "Walk-in Guest" trong DB và lấy ID đó điền vào đây.
-    const WALK_IN_GUEST_ID = 1; // Ví dụ ID 1 là khách vãng lai
+    // Lưu ý: Database yêu cầu customer_id. Bạn phải đảm bảo ID này tồn tại.
+    // Tốt nhất nên tạo sẵn 1 user với ID=1 làm "Guest Customer" trong DB
+    const WALK_IN_GUEST_ID = 1; 
 
     const payload = {
-      id: generateOrderId(), // QUAN TRỌNG: ID đúng format
-      cus_id: WALK_IN_GUEST_ID, // Cần ID khách hàng hợp lệ
+      id: generateOrderId(),
+      cus_id: WALK_IN_GUEST_ID, 
       prices: {
           total: calculateTotal()
       },
-      payment: paymentMethod.toLowerCase(), // 'cash', 'bank'...
+      payment: paymentMethod.toLowerCase(),
       time: {
           slot: deliveryTime.format('HH:mm'),
           date: deliveryDate.format('YYYY-MM-DD')
@@ -121,12 +115,18 @@ const AddOrderModal = ({ open, onCancel, onSave }) => {
       customer: {
           note: customerInfo.note
       },
-      address: customerInfo.receiver.address || "Tại cửa hàng",
-      receiver: {
-          name: customerInfo.receiver.name,
-          phone: customerInfo.receiver.phone
+      // Gửi object address đầy đủ 4 trường
+      address: {
+          street: street,
+          ward: ward,
+          district: district,
+          city: city
       },
-      status: 'pending', // Chữ thường
+      receiver: {
+          name: name,
+          phone: phone
+      },
+      status: 'confirmed', // Đơn tạo bởi nhân viên thường là đã xác nhận luôn
       items: items.map(i => ({
           id: i.id,
           qty: i.qty,
@@ -135,16 +135,25 @@ const AddOrderModal = ({ open, onCancel, onSave }) => {
     };
 
     try {
-        await onSave(payload); // Gọi hàm save từ props (thường là gọi API createOrder)
+        await onSave(payload);
         // Reset form
         setItems([]);
-        setCustomerInfo({ receiver: { name: '', phone: '', address: ''}, note: '' });
+        setCustomerInfo({ 
+            receiver: { name: '', phone: '', street: '', ward: '', district: '', city: ''}, 
+            note: '' 
+        });
         setIsProductPickerOpen(false);
     } catch (error) {
         console.error(error);
-        // message error đã được handle ở parent hoặc axios interceptor
     }
   };
+
+  const updateReceiver = (field, value) => {
+      setCustomerInfo(prev => ({
+          ...prev,
+          receiver: { ...prev.receiver, [field]: value }
+      }));
+  }
 
   return (
     <>
@@ -152,21 +161,21 @@ const AddOrderModal = ({ open, onCancel, onSave }) => {
         title={<div className={styles.headerTitle} style={{fontSize: 20}}>Create New Order</div>}
         open={open}
         onCancel={onCancel}
-        width={900}
+        width={1000}
         footer={null}
         style={{ top: 20 }}
       >
         <div className={styles.modalContent}>
-          {/* --- CỘT TRÁI: THÔNG TIN KHÁCH & SẢN PHẨM --- */}
           <Row gutter={24}>
+            {/* --- CỘT TRÁI --- */}
             <Col span={14} style={{ borderRight: '1px solid #f0f0f0' }}>
               <h3 style={{color: '#b71c1c', marginBottom: 15}}>Customer Information</h3>
-              <Row gutter={16}>
+              <Row gutter={10}>
                   <Col span={12}>
                       <Input 
                         placeholder="Receiver Name" 
                         value={customerInfo.receiver.name}
-                        onChange={e => setCustomerInfo({...customerInfo, receiver: {...customerInfo.receiver, name: e.target.value}})}
+                        onChange={e => updateReceiver('name', e.target.value)}
                         style={{marginBottom: 10}}
                       />
                   </Col>
@@ -174,15 +183,41 @@ const AddOrderModal = ({ open, onCancel, onSave }) => {
                       <Input 
                         placeholder="Phone Number" 
                         value={customerInfo.receiver.phone}
-                        onChange={e => setCustomerInfo({...customerInfo, receiver: {...customerInfo.receiver, phone: e.target.value}})}
+                        onChange={e => updateReceiver('phone', e.target.value)}
+                        style={{marginBottom: 10}}
+                      />
+                  </Col>
+                  
+                  {/* 4 Ô Nhập Địa Chỉ */}
+                  <Col span={8}>
+                      <Input 
+                        placeholder="City" 
+                        value={customerInfo.receiver.city} 
+                        onChange={e => updateReceiver('city', e.target.value)} 
+                        style={{marginBottom: 10}}
+                      />
+                  </Col>
+                  <Col span={8}>
+                      <Input 
+                        placeholder="District" 
+                        value={customerInfo.receiver.district} 
+                        onChange={e => updateReceiver('district', e.target.value)} 
+                        style={{marginBottom: 10}}
+                      />
+                  </Col>
+                  <Col span={8}>
+                      <Input 
+                        placeholder="Ward" 
+                        value={customerInfo.receiver.ward} 
+                        onChange={e => updateReceiver('ward', e.target.value)} 
                         style={{marginBottom: 10}}
                       />
                   </Col>
                   <Col span={24}>
                       <Input 
-                        placeholder="Address (Leave empty if eat-in)" 
-                        value={customerInfo.receiver.address}
-                        onChange={e => setCustomerInfo({...customerInfo, receiver: {...customerInfo.receiver, address: e.target.value}})}
+                        placeholder="Street / House No." 
+                        value={customerInfo.receiver.street} 
+                        onChange={e => updateReceiver('street', e.target.value)} 
                         style={{marginBottom: 10}}
                       />
                   </Col>
@@ -198,44 +233,33 @@ const AddOrderModal = ({ open, onCancel, onSave }) => {
                     itemLayout="horizontal"
                     dataSource={items}
                     renderItem={(item) => (
-                    <List.Item
-                        actions={[
-                            <Button type="text" danger onClick={() => handleRemoveItem(item.id)}>Remove</Button>
-                        ]}
-                    >
+                    <List.Item actions={[<Button type="text" danger onClick={() => handleRemoveItem(item.id)}>Remove</Button>]}>
                         <List.Item.Meta
                         avatar={<Avatar src={item.image} shape="square" size="large" />}
                         title={item.name}
                         description={
                             <div style={{display: 'flex', gap: 10, alignItems: 'center'}}>
-                                <span>{item.price.toLocaleString()} đ</span>
+                                <span>{Number(item.price).toLocaleString()} đ</span>
                                 <InputNumber min={1} value={item.qty} onChange={(val) => updateQty(item.id, val)} size="small" />
                             </div>
                         }
                         />
-                        <div>{(item.price * item.qty).toLocaleString()} đ</div>
+                        <div style={{fontWeight: 'bold'}}>{(item.price * item.qty).toLocaleString()} đ</div>
                     </List.Item>
                     )}
                 />
-                {items.length === 0 && <div style={{textAlign: 'center', color: '#999', padding: 20}}>No items added</div>}
               </div>
             </Col>
 
-            {/* --- CỘT PHẢI: THANH TOÁN & TỔNG --- */}
+            {/* --- CỘT PHẢI --- */}
             <Col span={10}>
                <h3 style={{color: '#b71c1c', marginBottom: 15}}>Payment & Delivery</h3>
                
                <div style={{marginBottom: 15}}>
                    <label style={{fontWeight: 'bold', display: 'block', marginBottom: 5}}>Payment Method</label>
-                   <Select 
-                    value={paymentMethod} 
-                    onChange={setPaymentMethod} 
-                    style={{width: '100%'}}
-                   >
+                   <Select value={paymentMethod} onChange={setPaymentMethod} style={{width: '100%'}}>
                        <Option value="cash">Cash</Option>
                        <Option value="bank">Bank Transfer</Option>
-                       <Option value="momo">Momo</Option>
-                       <Option value="card">Credit Card</Option>
                    </Select>
                </div>
 
@@ -249,23 +273,11 @@ const AddOrderModal = ({ open, onCancel, onSave }) => {
 
                <div style={{marginBottom: 20}}>
                    <label style={{fontWeight: 'bold', display: 'block', marginBottom: 5}}>Note</label>
-                   <TextArea 
-                    rows={3} 
-                    value={customerInfo.note}
-                    onChange={e => setCustomerInfo({...customerInfo, note: e.target.value})}
-                   />
+                   <TextArea rows={3} value={customerInfo.note} onChange={e => setCustomerInfo({...customerInfo, note: e.target.value})} />
                </div>
 
                <div style={{backgroundColor: '#fff7e6', padding: 15, borderRadius: 8}}>
-                   <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 10}}>
-                       <span>Subtotal:</span>
-                       <span>{calculateTotal().toLocaleString()} đ</span>
-                   </div>
-                   <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 10}}>
-                       <span>Shipping:</span>
-                       <span>0 đ</span>
-                   </div>
-                   <div style={{display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: 16, color: '#b71c1c', borderTop: '1px dashed #ccc', paddingTop: 10}}>
+                   <div style={{display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: 18, color: '#b71c1c'}}>
                        <span>Total:</span>
                        <span>{calculateTotal().toLocaleString()} đ</span>
                    </div>
@@ -273,42 +285,24 @@ const AddOrderModal = ({ open, onCancel, onSave }) => {
             </Col>
           </Row>
 
-          {/* Footer Buttons */}
-          <div style={{ textAlign: 'right', marginTop: 20, display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-            <Button onClick={onCancel}>Close</Button>
+          <div style={{ textAlign: 'right', marginTop: 20 }}>
+            <Button onClick={onCancel} style={{marginRight: 10}}>Close</Button>
             <Button type="primary" onClick={handleSave} style={{backgroundColor: '#b71c1c'}}>Save Order</Button>
           </div>
         </div>
       </Modal>
 
-      {/* --- MODAL CON: CHỌN BÁNH --- */}
-      <Modal
-        title="Select Product"
-        open={isProductPickerOpen}
-        onCancel={() => setIsProductPickerOpen(false)}
-        footer={null}
-      >
-        <Input.Search
-            placeholder="Search by product name"
-            allowClear
-            value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            style={{ marginBottom: 12 }}
-        />
-
+      <Modal title="Select Product" open={isProductPickerOpen} onCancel={() => setIsProductPickerOpen(false)} footer={null}>
+        <Input.Search placeholder="Search product..." onChange={(e) => setSearchKeyword(e.target.value)} style={{ marginBottom: 12 }} />
         <div style={{height: 400, overflowY: 'auto'}}>
             <List
-            itemLayout="horizontal"
             dataSource={filteredProducts}
-            locale={{ emptyText: "No products found" }}
             renderItem={(item) => (
-                <List.Item
-                actions={[<Button type="primary" size="small" onClick={() => handleAddProductToCart(item)}>Add</Button>]}
-                >
+                <List.Item actions={[<Button type="primary" size="small" onClick={() => handleAddProductToCart(item)}>Add</Button>]}>
                 <List.Item.Meta
-                    avatar={<Avatar src={item.image || item.images} />}
+                    avatar={<Avatar src={item.image} />}
                     title={item.name}
-                    description={`Price: ${Number(item.price).toLocaleString()} đ | Stock: ${item.stock || item.count}`}
+                    description={`${Number(item.price).toLocaleString()} đ`}
                 />
                 </List.Item>
             )}
