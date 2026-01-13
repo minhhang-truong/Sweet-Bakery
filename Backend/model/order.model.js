@@ -1,58 +1,77 @@
 const pool = require('../config/pool');
 
 class Order {
+    // --- 1. TẠO ĐƠN HÀNG ---
     static async createOrder(data) {
+        const client = await pool.connect();
         try {
-            const query = `INSERT INTO orders
-                        (id, orderdate, customer_id, total_amount, payment, receive_time, receive_date, note, receive_address, receiver, receive_phone, status)
-                        VALUES ($1, CURRENT_DATE, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`;
-            const values = [data.id, data.cus_id, data.prices.total, data.payment, data.time.slot, data.time.date, data.customer.note, data.address, data.receiver.name, data.receiver.phone, data.status];
-            const res = await pool.query(query, values);
+            await client.query('BEGIN');
 
-            if(data.employee_id) {
-                const q = await pool.query(`SELECT id FROM employee WHERE user_id = $1`, [data.employee_id]);
-                await pool.query(`UPDATE orders SET employee_id = $1 WHERE id = $2`, [q.rows[0].id, res.rows[0].id]);
-            }
-            
-            for(let item of data.items){
-                let queryItem = `INSERT INTO orderline(order_id, prod_id, quantity, orderdate)
-                                VALUES ($1, $2, $3, CURRENT_DATE)`;
-                let valuesItem = [data.id, item.id, item.qty];
-                await pool.query(queryItem, valuesItem);
-            }
-            return res.rows[0];
-        } catch (error){
-            console.error(error);
-            throw error;
-        }
-    }
+            let receiveTimestamp;
+            const timeData = data.time || {};
+            const dateStr = timeData.date; 
+            const timeStr = timeData.time; 
 
-    static async getOrder(userId){
-        try {
-            const query = `SELECT id, orderdate, status, total_amount FROM orders WHERE customer_id = $1 ORDER BY orderdate DESC`;
-            const values = [userId];
-            const res = await pool.query(query, values);
-            const result = [];
-            for (let order of res.rows){
-                const orderquery = `SELECT p.name as name, o.quantity as qty, p.price as price FROM orderline o
-                                    JOIN product p ON o.prod_id = p.id
-                                    WHERE o.order_id = $1`;
-                const ans = await pool.query(orderquery, [order.id]);
-                order.items = ans.rows;
-                result.push(order);
+            if (dateStr && timeStr) {
+                receiveTimestamp = `${dateStr} ${timeStr}:00`;
+            } else {
+                const now = new Date();
+                now.setHours(now.getHours() + 2);
+                receiveTimestamp = now.toISOString();
             }
-            return result;
+
+            const payment = (data.payment || 'cash').toLowerCase();
+            const status = (data.status || 'pending').toLowerCase();
+            const addr = data.address || {};
+            const street = addr.street || "";
+            const ward = addr.ward || "";
+            const district = addr.district || "";
+            const city = addr.city || "";
+
+            const queryOrder = `
+                INSERT INTO app.orders 
+                (order_id, customer_id, total_amount, order_time, status, 
+                 receive_time, payment, note, 
+                 receiver_name, receiver_phone, 
+                 receiver_street, receiver_ward, receiver_district, receiver_city)
+                VALUES ($1, $2, $3, NOW(), $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            `;
+
+            const valuesOrder = [
+                data.id, data.cus_id, data.prices.total, status, receiveTimestamp, payment,
+                data.customer.note || "", data.receiver.name, data.receiver.phone,
+                street, ward, district, city
+            ];
+
+            await client.query(queryOrder, valuesOrder);
+
+            const queryDetail = `
+                INSERT INTO order_line (order_id, product_id, quantity, price)
+                VALUES ($1, $2, $3, $4)
+            `;
+
+            for (let item of data.items) {
+                await client.query(queryDetail, [data.id, item.id, item.qty, item.price]);
+            }
+
+            await client.query('COMMIT');
+            return { success: true, orderId: data.id };
+
         } catch (error) {
-            console.error(error);
+            await client.query('ROLLBACK');
+            console.error("Error creating order:", error);
             throw error;
+        } finally {
+            client.release();
         }
     }
 
+    // --- 2. TRA CỨU 1 ĐƠN HÀNG (Cho trang Success / Tracking) ---
     static async findOrder(orderId) {
         try {
-            const query = `SELECT * FROM orders WHERE id = $1`;
-            const values = [orderId];
-            const res = await pool.query(query, values);
+            // Lấy thông tin đơn hàng từ bảng orders
+            const query = `SELECT * FROM app.orders WHERE order_id = $1`;
+            const res = await pool.query(query, [orderId]);
             return res.rows[0];
         } catch (error) {
             console.error(error);
@@ -60,21 +79,27 @@ class Order {
         }
     }
 
-    static async getAllOrdersByDate(data){
+    // --- 3. LỊCH SỬ ĐƠN HÀNG (Cho trang History) ---
+    static async getOrder(customerId) {
         try {
-            const query = `SELECT orders.id,
-                                    COALESCE(fullname, receiver) AS fullname,
-                                    receive_phone, ordertime, total_amount, orders.status,
-                                    receive_date, receive_time, receive_address, receiver,
-                                    COALESCE(phone, receive_phone) AS phone,
-                                    payment, note, employee_note
-                                    FROM orders
-                           LEFT JOIN customer ON orders.customer_id = customer.user_id
-                           LEFT JOIN useraccount ON customer.user_id = useraccount.id
-                           WHERE orderdate = $1
-                           ORDER BY ordertime;`
-            const value = [data]
-            const res = await pool.query(query, value);
+            // Lấy đơn hàng kèm danh sách sản phẩm (JSON Aggregation)
+            const query = `
+                SELECT o.*, 
+                       json_agg(json_build_object(
+                           'id', od.product_id,
+                           'qty', od.quantity,
+                           'price', od.price,
+                           'name', p.name,
+                           'image', p.image
+                       )) as items
+                FROM app.orders o
+                LEFT JOIN app.order_line od ON o.order_id = od.order_id
+                LEFT JOIN app.product p ON od.product_id = p.id
+                WHERE o.customer_id = $1
+                GROUP BY o.order_id
+                ORDER BY o.order_time DESC
+            `;
+            const res = await pool.query(query, [customerId]);
             return res.rows;
         } catch (error) {
             console.error(error);
@@ -82,173 +107,10 @@ class Order {
         }
     }
 
-    static async getAllOrdersByReceiveDate(data){
-        try {
-            const query = `SELECT orders.id,
-                                    COALESCE(fullname, receiver) AS fullname,
-                                    receive_phone, ordertime, total_amount, orders.status,
-                                    receive_date, receive_time, receive_address, receiver,
-                                    COALESCE(phone, receive_phone) AS phone,
-                                    payment, note, employee_note
-                                    FROM orders
-                           LEFT JOIN customer ON orders.customer_id = customer.user_id
-                           LEFT JOIN useraccount ON customer.user_id = useraccount.id
-                           WHERE receive_date = $1
-                           ORDER BY receive_time;`
-            const value = [data]
-            const res = await pool.query(query, value);
-            return res.rows;
-        } catch (error) {
-            console.error(error);
-            throw error;
-        }
-    }
-
-    static async getOrderDetail(orderId) {
-        try {
-            const query = `SELECT prod_id, quantity, p.price FROM orderline o
-                           JOIN product p ON o.prod_id = p.id
-                           WHERE o.order_id = $1;`
-            const values = [orderId];
-            const res = await pool.query(query, values);
-            return res.rows;
-        } catch (error) {
-            console.error(error);
-            throw error;
-        }
-    }
-
-    static async updateOrderStatus({ orderId, newStatus }) {
-        try {
-            await pool.query("BEGIN");
-
-            // Lock order
-            const { rows: orderRows } = await pool.query(
-                `SELECT status
-                FROM orders
-                WHERE id = $1
-                FOR UPDATE`,
-                [orderId]
-            );
-
-            if (orderRows.length === 0) {
-                throw {
-                    status: 404,
-                    message: 'Order not found',
-                };
-            }
-
-            const oldStatus = orderRows[0].status;
-
-            // Validate transition
-            const allowedTransitions = {
-                pending: ["confirmed", "cancelled"],
-                confirmed: ["delivering", "cancelled"],
-                delivering: ["completed", "cancelled"],
-                completed: [],
-                cancelled: []
-            };
-
-            if (!allowedTransitions[oldStatus].includes(newStatus)) {
-                throw {
-                    status: 400,
-                    message: `Cannot change status from ${oldStatus} to ${newStatus}`,
-                }
-            }
-
-            // pending → confirmed : TRỪ STOCK
-            if (oldStatus === "pending" && newStatus === "confirmed") {
-                const { rows: items } = await pool.query(
-                `SELECT prod_id, quantity
-                FROM orderline
-                WHERE order_id = $1`,
-                [orderId]
-                );
-
-                for (const item of items) {
-                    // lock product
-                    const { rows: productRows } = await pool.query(
-                        `SELECT stock
-                        FROM product
-                        WHERE id = $1
-                        FOR UPDATE`,
-                        [item.prod_id]
-                    );
-
-                    if (productRows.length === 0) {
-                        throw {
-                            status: 409,
-                            message: `Product not found`,
-                        }
-                    }
-
-                    if (productRows[0].stock < item.quantity) {
-                        throw {
-                            status: 409,
-                            message: `Product ${err.productId} is out of stock`,
-                        }
-                    }
-
-                    await pool.query(
-                        `UPDATE product
-                        SET stock = stock - $1
-                        WHERE id = $2`,
-                        [item.quantity, item.prod_id]
-                    );
-                }
-            }
-
-            // confirmed → cancelled : HOÀN STOCK
-            if (oldStatus === "confirmed" && newStatus === "cancelled") {
-                const { rows: items } = await pool.query(
-                `SELECT prod_id, quantity
-                FROM orderline
-                WHERE order_id = $1`,
-                [orderId]
-                );
-
-                for (const item of items) {
-                    await pool.query(
-                        `UPDATE product
-                        SET stock = stock + $1
-                        WHERE id = $2`,
-                        [item.quantity, item.prod_id]
-                    );
-                }
-            }
-
-            // Update order status (có điều kiện)
-            const result = await pool.query(
-                `UPDATE orders
-                SET status = $1
-                WHERE id = $2
-                AND status = $3`,
-                [newStatus, orderId, oldStatus]
-            );
-
-            if (result.rowCount !== 1) {
-                throw {
-                    status: 409,
-                    message: "Order was updated by another employee",
-                }
-            }
-
-            await pool.query("COMMIT");
-            return { success: true };
-        } catch (err) {
-            await pool.query("ROLLBACK");
-            console.error(err);
-            throw err;
-        }
-    }
-
-    static async updateInternalNote(id, internal_note) {
-        try {
-            await pool.query(`UPDATE orders SET employee_note = $1 WHERE id = $2`, [internal_note, id]);
-        } catch (error) {
-            console.error(error);
-            throw error;
-        }
+    // --- 4. LẤY TẤT CẢ ĐƠN (Cho Employee/Admin) ---
+    static async getAllOrders() {
+        const res = await pool.query(`SELECT * FROM app.orders ORDER BY order_time DESC`);
+        return res.rows;
     }
 }
 

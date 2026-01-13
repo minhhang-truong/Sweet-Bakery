@@ -4,6 +4,8 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import axios from "axios";
 import logoImg from '../../../assets/images/common/logo-sweet-bakery.png';
+import { message } from "antd"; // Thêm message ant design cho đẹp
+
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export default function SignIn() {
@@ -21,13 +23,11 @@ export default function SignIn() {
     e.preventDefault();
     setErr("");
 
-    // ✅ mock validate đơn giản
     if (!email.trim() || !pw.trim()) {
       setErr("Please enter email and password");
       return;
     }
-    // TODO: gọi API thật ở đây
-    console.log(API_URL)
+
     try {
       const res = await axios.post(`${API_URL}/auth/signin`, {
         email: email,
@@ -35,21 +35,27 @@ export default function SignIn() {
       }, {withCredentials: true});
 
       console.log("Login success:", res.data);
-      // localStorage.setItem("token", res.data.token); // Save JWT token
-      await auth.login(res.data.user);
-      if (redirect) {
-        navigate(`/${redirect}`);
-        return;
+      const user = res.data.user;
+
+      // SỬA: Check role là string 'customer'
+      if (user.role !== 'customer') {
+          setErr("This account does not have permission to login here.");
+          return;
       }
-      if (res.data.user.role == 2) navigate("/employee", {replace: true});
-      else if (res.data.user.role == 3) navigate("/manager/dashboard");
-      else navigate("/", { replace: true });
-    } catch (err) {
-      if (err.response) {
-        // Response came from backend with an error message
-        setErr(err.response.data.error || "Login failed");
+
+      // Lưu user vào context/localStorage
+      // (Giả sử auth.login xử lý việc này, nếu không thì set localStorage thủ công)
+      localStorage.setItem("auth:user:v1", JSON.stringify(user));
+      if(auth.login) auth.login(user);
+
+      message.success("Welcome back!");
+      navigate(redirect ? `/${redirect}` : "/");
+
+    } catch (error) {
+      console.error(error);
+      if (error.response) {
+        setErr(error.response.data.error || "Login failed");
       } else {
-        // Network or unexpected error
         setErr("Unable to connect to server");
       }
     }
@@ -84,6 +90,9 @@ export default function SignIn() {
               onChange={(e) => setPw(e.target.value)}
               required
             />
+            <button type="button" onClick={() => setShow(!show)} style={{border:'none', background:'none', cursor:'pointer'}}>
+               {show ? "👁️" : "🙈"}
+            </button>
           </label>
 
           {err && <div className="signin__error">{err}</div>}
@@ -92,7 +101,7 @@ export default function SignIn() {
         </form>
 
         <p className="signin__hint">
-          Don’t have an account? <Link to="/signup">Sign up</Link>
+          Don't have an account? <Link to="/signup">Sign up</Link>
         </p>
       </div>
     </main>

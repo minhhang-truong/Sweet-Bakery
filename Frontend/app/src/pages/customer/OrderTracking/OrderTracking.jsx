@@ -6,8 +6,6 @@ import api from "../../../lib/axiosCustomer.js";
 import "./OrderTracking.css";
 import { formatVND } from "../../../lib/money.js";
 
-const API_URL = import.meta.env.VITE_BACKEND_URL;
-
 function formatDateTime(iso) {
   if (!iso) return "Updating";
   const date = new Date(iso);
@@ -24,7 +22,6 @@ export default function OrderTracking() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchOrder() {
@@ -35,78 +32,98 @@ export default function OrderTracking() {
         setOrder(res.data);
       } catch (err) {
         if (err.response?.status === 401) {
-          const redirect = encodeURIComponent(
-            location.pathname
-          );
-          navigate(`/signin?redirect=track/${orderId}`, { replace: true });
-          return;
+           setError("Please login to view this order.");
+        } else {
+           setError("Order not found or access denied.");
         }
-        setError(err.response?.data?.error || "Order not found");
       } finally {
         setLoading(false);
       }
     }
-
     fetchOrder();
   }, [orderId]);
 
-  if (loading) return <p>Loading...</p>;
-  if (!order && !error) return null;
+  // Hàm helper để map địa chỉ từ các cột DB
+  const getFullAddress = (o) => {
+      // Backend mới trả về: receiver_street, receiver_ward, receiver_district, receiver_city
+      // Nếu Model trả về đúng tên cột DB:
+      if(o.receiver_street) {
+          return `${o.receiver_street}, ${o.receiver_ward || ''}, ${o.receiver_district || ''}, ${o.receiver_city || ''}`;
+      }
+      // Fallback nếu cột vẫn tên cũ (tùy backend trả về gì)
+      return o.receive_address || "N/A";
+  }
 
   return (
     <>
       <Header />
       <main className="trackPage">
         <div className="container">
-          {error ? (
-            <section className="trackBox">
-              <h1>{error}</h1>
-              <p>
-                Please check your order code again <strong>{orderId}</strong>. If you are sure the code is correct, please contact the hotline for support.
-              </p>
-              <Link to="/menu">Go back to menu</Link>
-            </section>
-          ) : (
-            <section className="trackBox">
-              <p className="trackEyebrow">Tracking</p>
-              <h1>Status of {order.id}</h1>
-              <div className="trackStatusChip">{order.status}</div>
+          <div className="trackHeader">
+            <h1>Track Order</h1>
+            <p>Order ID: <strong>{orderId}</strong></p>
+          </div>
+
+          {loading && <div className="trackLoading">Loading...</div>}
+          
+          {error && (
+            <div className="trackError">
+              <p>{error}</p>
+              <Link to="/menu" className="trackBack">Back to Menu</Link>
+            </div>
+          )}
+
+          {!loading && !error && order && (
+            <section className="trackCard">
+              <div className="trackStatus">
+                Status: <span className={`statusTag is-${order.status}`}>{order.status?.toUpperCase()}</span>
+              </div>
+              
               <p className="trackTotal">
                 Total: <strong>{formatVND(order.total_amount)}</strong>
               </p>
 
+              {/* Timeline giả lập vì DB mới không lưu timeline JSON chi tiết, 
+                  hoặc bạn có thể tự build logic dựa trên status */}
               <div className="trackTimeline">
-                {order.timeline?.map((step, index) => (
-                  <div className="trackStep" key={index}>
+                  <div className="trackStep">
                     <div className="trackDot" />
                     <div>
-                      <h3>{step.label}</h3>
-                      <p>{formatDateTime(step.time)}</p>
-                      <small>{step.note}</small>
+                      <h3>Order Placed</h3>
+                      <p>{formatDateTime(order.order_time || order.orderdate)}</p>
                     </div>
                   </div>
-                ))}
+                  {order.status === 'completed' && (
+                      <div className="trackStep">
+                        <div className="trackDot" />
+                        <div>
+                          <h3>Delivered</h3>
+                          <p>{formatDateTime(order.receive_time)}</p>
+                        </div>
+                      </div>
+                  )}
               </div>
 
               <div className="trackMeta">
                 <div>
                   <span>Recipient </span>
-                  <strong>{order.receiver}</strong>
+                  {/* SỬA: map cột receiver_name */}
+                  <strong>{order.receiver_name || order.receiver}</strong>
                 </div>
                 <div>
                   <span>Phone </span>
-                  <strong>{order.receive_phone}</strong>
+                  {/* SỬA: map cột receiver_phone */}
+                  <strong>{order.receiver_phone || order.receive_phone}</strong>
                 </div>
                 <div>
                   <span>Address</span>
-                  <p>
-                    {order.receive_address}
-                  </p>
+                  <p>{getFullAddress(order)}</p>
                 </div>
                 <div>
-                  <span>Expected delivery date</span>
+                  <span>Expected delivery</span>
                   <p>
-                    {new Date(order.receive_date).toLocaleDateString()} - {order.receive_time}
+                    {/* SỬA: map cột receive_time (timestamp) */}
+                    {order.receive_time ? formatDateTime(order.receive_time) : "Updating..."}
                   </p>
                 </div>
               </div>

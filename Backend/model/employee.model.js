@@ -1,10 +1,22 @@
 const pool = require('../config/pool');
 
 class Employee {
+    // Hàm helper tách tên
+    static splitName(fullname) {
+        if (!fullname) return { firstName: 'Unknown', lastName: 'Employee' };
+        const parts = fullname.trim().split(/\s+/);
+        if (parts.length === 1) return { firstName: parts[0], lastName: '' };
+        const lastName = parts.pop();
+        const firstName = parts.join(' ');
+        return { firstName, lastName };
+    }
+
     static async getEmployees() {
         try {
-            const query = `SELECT fullname, e.id, u.email, phone, department FROM employee e
-                        JOIN useraccount u ON e.user_id = u.id`;
+            // Sửa: employee.user_id là PK
+            const query = `SELECT CONCAT(u.first_name, ' ', u.last_name) as fullname, e.user_id as id, u.email, u.phone, position as department 
+                        FROM employee e
+                        JOIN user_account u ON e.user_id = u.user_id`;
             const res = await pool.query(query);
             return res.rows;
         } catch ( error) {
@@ -15,17 +27,28 @@ class Employee {
 
     static async addEmployee(data) {
         try {
-            const query1 = `INSERT INTO useraccount(email, phone, password, role_id) VALUES
-                        ($1, $2, $3, 2) RETURNING id`;
-            const values1 = [data.loginEmail, data.phoneNumber, data.password];
+            const { firstName, lastName } = Employee.splitName(data.fullName);
+            
+            // Sửa: role_id -> role='staff'
+            const query1 = `INSERT INTO user_account(email, phone, password, role, first_name, last_name, status, gender) VALUES
+                        ($1, $2, $3, 'staff', $4, $5, 'active', $6) RETURNING user_id as id`;
+            const values1 = [data.loginEmail, data.phoneNumber, data.password, firstName, lastName, data.gender];
             const res = await pool.query(query1, values1);
             const userId = res.rows[0].id;
 
-            const query2 = `INSERT INTO employee(user_id, fullname, gender, avatar, address, department, id, manager_id) VALUES
-                        ($1, $2, $3, $4, $5, $6, $7, 1)`;
-            const values2 = [userId, data.fullName, data.gender, data.avatar, data.address, data.department, data.empId];
+            // Sửa: Bảng employee mới
+            const query2 = `INSERT INTO employee(user_id, position, salary, hire_date) VALUES
+                        ($1, $2, 0, NOW())`; // Default salary 0
+            const values2 = [userId, data.department]; // data.department mapping vào position
             await pool.query(query2, values2);
-            if(data.dob.length !== 0) await pool.query(`UPDATE employee SET dob = $1 WHERE user_id = $2`, [data.dob, userId]);
+            
+            if(data.dob && data.dob.length !== 0) 
+                await pool.query(`UPDATE user_account SET dob = $1 WHERE user_id = $2`, [data.dob, userId]);
+            
+            // Cập nhật avatar vào user_account
+             if(data.avatar)
+                await pool.query(`UPDATE user_account SET avatar = $1 WHERE user_id = $2`, [data.avatar, userId]);
+
         } catch (error) {
             console.error('Error adding employee: ', error);
             throw error;
@@ -34,14 +57,9 @@ class Employee {
 
     static async deleteEmployee(id) {
         try {
-            const query = `SELECT user_id FROM employee WHERE id = $1`;
-            const userId = await pool.query(query, [id]);
-
-            const deleteEmployee = `DELETE FROM employee WHERE id = $1`;
-            await pool.query(deleteEmployee, [id]);
-
-            const deleteUser = `DELETE FROM useraccount WHERE id = $1`;
-            await pool.query(deleteUser, [userId.rows[0].user_id]);
+            // Schema mới: xóa user_account là cascade xóa employee
+            const deleteUser = `DELETE FROM user_account WHERE user_id = $1`;
+            await pool.query(deleteUser, [id]);
         } catch (error) {
             console.error('Error deleting employee: ', error);
             throw error;
@@ -50,10 +68,12 @@ class Employee {
 
     static async getEmployeeDetails(id) {
         try {
-            const query = `SELECT fullname, e.id, phone, u.email AS loginEmail, e.email, address, hire_date, dob, gender, avatar, department
+            const query = `SELECT CONCAT(u.first_name, ' ', u.last_name) as fullname, e.user_id as id, 
+                            u.phone, u.email AS loginEmail, u.email, 
+                            u.address_detail as address, hire_date, u.dob, u.gender, u.avatar, position as department
                             FROM employee e
-                            JOIN useraccount u ON u.id = e.user_id
-                            WHERE e.id = $1`;
+                            JOIN user_account u ON u.user_id = e.user_id
+                            WHERE e.user_id = $1`;
             const res = await pool.query(query, [id]);
             return res.rows[0];
         } catch (error) {
@@ -64,9 +84,12 @@ class Employee {
 
     static async editEmployee(data) {
         try {
-            const query = `UPDATE employee SET department = $1, avatar = $2 WHERE id = $3`;
-            const values = [data.department, data.avatar, data.empId];
-            await pool.query(query, values);
+            // Update position ở bảng employee
+            const query = `UPDATE employee SET position = $1 WHERE user_id = $2`;
+            await pool.query(query, [data.department, data.empId]);
+            
+            // Update avatar ở bảng user_account
+            await pool.query(`UPDATE user_account SET avatar = $1 WHERE user_id = $2`, [data.avatar, data.empId]);
         } catch (error) {
             console.error('Error edit employee: ', error);
             throw error;

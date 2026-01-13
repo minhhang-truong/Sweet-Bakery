@@ -39,19 +39,38 @@ const InfoTable = ({ title, variant, data, editable = false, errors = {}, onValu
                   {/* EDIT MODE & NOT READONLY */}
                   {editable && !isReadOnly ? (
                     <>
-                    <input
-                      type={row.type || "text"}
-                      value={row.value}
-                      onChange={(e) =>
-                        onValueChange?.(index, e.target.value)
-                      }
-                      className={`w-full bg-transparent text-sm
-                                border-b
-                                ${errors[row.key]
-                                  ? "border-red-500"
-                                  : "border-transparent"}
-                                focus:outline-none focus:border-primary`}
-                    />
+                    {/* SỬA: Thêm hỗ trợ Select Box */}
+                    {row.type === 'select' ? (
+                        <select
+                            value={row.value}
+                            onChange={(e) => onValueChange?.(row.key, e.target.value)}
+                            className={`w-full bg-transparent text-sm border-b py-1
+                                ${errors[row.key] ? "border-red-500" : "border-gray-300"}
+                                focus:outline-none focus:border-primary cursor-pointer`}
+                        >
+                            {row.options?.map((opt) => (
+                                <option key={opt} value={opt}>
+                                    {opt}
+                                </option>
+                            ))}
+                        </select>
+                    ) : (
+                        <input
+                        type={row.type || "text"}
+                        value={row.value}
+                        onChange={(e) =>
+                            onValueChange?.(row.key, e.target.value)
+                        }
+                        placeholder={row.placeholder || ""}
+                        className={`w-full bg-transparent text-sm py-1
+                                    border-b
+                                    ${errors[row.key]
+                                    ? "border-red-500"
+                                    : "border-gray-300"}
+                                    focus:outline-none focus:border-primary`}
+                        />
+                    )}
+                    
                     {errors[row.key] && (
                       <p className="text-xs text-red-500 mt-1">
                         {errors[row.key]}

@@ -3,19 +3,24 @@ const pool = require('../config/pool');
 class Revenue {
     static async getGeneralRevenue(date) {
         try {
-            const q1 = `SELECT COUNT(id) AS total_orders, COALESCE(SUM(total_amount), 0) AS total_revenue
+            // Sửa: id -> order_id
+            const q1 = `SELECT COUNT(order_id) AS total_orders, COALESCE(SUM(total_amount), 0) AS total_revenue
                         FROM orders
-                        WHERE orderdate = $1 AND status = 'completed'`;
+                        WHERE DATE(order_time) = $1 AND status = 'completed'`;
             const general = await pool.query(q1, [date]);
+            
+            // Sửa: orderline -> order_line, orders.id -> orders.order_id
             const q2 = `SELECT COALESCE(SUM(ol.quantity), 0) AS total_items
-                        FROM orderline ol
-                        JOIN orders o ON o.id = ol.order_id
-                        WHERE o.orderdate = $1 AND o.status = 'completed';`
+                        FROM order_line ol
+                        JOIN orders o ON o.order_id = ol.order_id
+                        WHERE DATE(o.order_time) = $1 AND o.status = 'completed';`
             const items = await pool.query(q2, [date]);
-            const q3 = `SELECT p.name, SUM(ol.quantity) AS sold_quantity FROM orderline ol
-                        JOIN orders o ON o.id = ol.order_id
-                        JOIN product p ON p.id = ol.prod_id
-                        WHERE o.orderdate = $1 AND o.status = 'completed'
+            
+            // Sửa: product_id
+            const q3 = `SELECT p.name, SUM(ol.quantity) AS sold_quantity FROM order_line ol
+                        JOIN orders o ON o.order_id = ol.order_id
+                        JOIN product p ON p.id = ol.product_id
+                        WHERE DATE(o.order_time) = $1 AND o.status = 'completed'
                         GROUP BY p.id, p.name
                         ORDER BY sold_quantity DESC
                         LIMIT 5`;
@@ -44,7 +49,7 @@ class Revenue {
                             SELECT d.day, COALESCE(SUM(o.total_amount), 0) AS revenue
                             FROM days d
                             LEFT JOIN orders o
-                            ON o.orderdate = d.day
+                            ON DATE(o.order_time) = d.day
                             WHERE status = 'completed' OR status IS NULL
                             GROUP BY d.day
                             ORDER BY d.day`;

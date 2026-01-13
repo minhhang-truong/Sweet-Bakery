@@ -12,6 +12,7 @@ module.exports.getProducts = async (req, res) => {
 
 module.exports.addProduct = async (req, res) => {
     try {
+        // Logic tạo slug giữ nguyên
         const data = {
             ...req.body,
             slug: req.body.category
@@ -35,6 +36,7 @@ module.exports.addProduct = async (req, res) => {
 
 module.exports.deleteProduct = async (req, res) => {
     try {
+        // ID sản phẩm trong DB mới vẫn là string (varchar), nên không cần parseInt nếu FE gửi string
         const id = req.params.id;
         await Product.deleteProduct(id);
         console.log("Deleted", id);

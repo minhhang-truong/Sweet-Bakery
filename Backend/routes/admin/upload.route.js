@@ -5,8 +5,10 @@ const controller = require("../../controller/admin/upload.controller");
 const verifyToken = require("../../middleware/auth.middleware");
 const { authorize } = require("../../middleware/authorize.middleware");
 
-router.post("/avatar", verifyToken, authorize(3), upload.single("image"), controller.uploadAvatar);
+// SỬA: authorize(3) -> authorize('admin')
+router.post("/avatar", verifyToken, authorize('admin'), upload.single("image"), controller.uploadAvatar);
 
-router.post("/product", verifyToken, authorize(3), upload.single("image"), controller.uploadProductImage);
+// Lưu ý: Đảm bảo controller upload có hàm uploadProductImage nhé (lúc nãy file bạn gửi chỉ thấy uploadAvatar)
+router.post("/product", verifyToken, authorize('admin'), upload.single("image"), controller.uploadProductImage);
 
 module.exports = router;

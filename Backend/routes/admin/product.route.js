@@ -5,14 +5,15 @@ const verifyToken = require('../../middleware/auth.middleware');
 const controller = require("../../controller/admin/product.controller");
 const { authorize } = require('../../middleware/authorize.middleware');
 
-router.get("/", verifyToken, authorize(3), controller.getProducts);
+// SỬA: authorize(3) -> authorize('admin')
+router.get("/", verifyToken, authorize('admin'), controller.getProducts);
 
-router.post("/add", verifyToken, authorize(3), controller.addProduct);
+router.post("/add", verifyToken, authorize('admin'), controller.addProduct);
 
-router.delete("/delete/:id", verifyToken, authorize(3), controller.deleteProduct);
+router.delete("/delete/:id", verifyToken, authorize('admin'), controller.deleteProduct);
 
-router.get("/details/:id", verifyToken, authorize(3), controller.productDetails);
+router.get("/details/:id", verifyToken, authorize('admin'), controller.productDetails);
 
-router.put("/edit", verifyToken, authorize(3), controller.updateProduct);
+router.put("/edit", verifyToken, authorize('admin'), controller.updateProduct);
 
 module.exports = router;

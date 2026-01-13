@@ -7,3 +7,15 @@ module.exports.generateRandomString = (length) => {
     }
      return res;
 }
+
+// Thêm hàm này để tạo ID đơn hàng đúng chuẩn Database mới
+module.exports.generateOrderId = () => {
+    const numbers = "0123456789";
+    let res = "ORD"; // Bắt buộc phải có prefix này
+    
+    // Random thêm 9 số
+    for(let i = 0; i < 9; i++){
+        res += numbers.charAt(Math.floor(Math.random() * numbers.length));
+    }
+    return res;
+}

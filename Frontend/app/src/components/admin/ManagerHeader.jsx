@@ -12,7 +12,12 @@ const ManagerHeader = ({ onMenuClick, userRole = "Owner" }) => {
     try {
       const storedUser = localStorage.getItem("auth:user:v1");
       if (storedUser) {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        // SỬA: Backend trả về fullname, nên ưu tiên lấy fullname
+        setUser({
+            name: parsedUser.fullname || parsedUser.name || "Admin",
+            email: parsedUser.email || ""
+        });
       }
     } catch (err) {
       console.error("Invalid user in localStorage");
@@ -36,14 +41,28 @@ const ManagerHeader = ({ onMenuClick, userRole = "Owner" }) => {
         <div className="w-8 h-8 rounded-full border border-muted-foreground flex items-center justify-center">
           <User className="w-4 h-4 text-muted-foreground" />
         </div>
+        <div className="flex flex-col">
+          <span className="text-xs font-bold text-foreground leading-tight">
+            Sweet Bakery
+          </span>
+          <span className="text-[10px] text-muted-foreground leading-tight">
+            Management System
+          </span>
+        </div>
+      </div>
 
-        <div className="text-sm">
-          <div className="font-medium text-foreground">
-            {user.name} - {userRole}
-          </div>
-          <div className="text-xs text-muted-foreground">
-            Mail: {user.email || "--"}
-          </div>
+      <div className="ml-auto flex items-center gap-4">
+        <div className="text-right hidden sm:block">
+          <p className="text-sm font-bold text-primary-foreground leading-none">
+            {user.name}
+          </p>
+          <p className="text-xs text-primary-foreground/80 font-medium">
+            {userRole}
+          </p>
+        </div>
+        
+        <div className="w-9 h-9 rounded-full bg-card border-2 border-primary-foreground/20 flex items-center justify-center text-primary font-bold shadow-md">
+           {user.name.charAt(0).toUpperCase()}
         </div>
       </div>
     </header>

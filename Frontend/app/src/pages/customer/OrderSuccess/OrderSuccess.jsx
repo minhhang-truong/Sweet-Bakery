@@ -1,22 +1,50 @@
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Header from "../../../components/common/Header/Header.jsx";
 import Footer from "../../../components/common/Footer/Footer.jsx";
 import "./OrderSuccess.css";
-import { findOrderById } from "../../../lib/orders.js";
 import { formatVND } from "../../../lib/money.js";
+import api from "../../../lib/axiosCustomer.js"; // Import axios instance
 
 export default function OrderSuccess() {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const order = findOrderById(orderId);
+  
+  // State để lưu dữ liệu thật từ API
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+
+    async function fetchOrder() {
+      try {
+        // Gọi API lấy chi tiết đơn hàng (dùng chung endpoint track)
+        const res = await api.get(`/api/orders/track/${orderId}`);
+        setOrder(res.data);
+      } catch (err) {
+        console.error("Lỗi khi lấy thông tin đơn hàng:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (orderId) {
+      fetchOrder();
+    }
+  }, [orderId]);
 
   const handleTrack = () => {
     navigate(`/track/${orderId}`);
+  };
+
+  // Hàm format thời gian hiển thị
+  const formatTime = (isoString) => {
+    if (!isoString) return "";
+    return new Date(isoString).toLocaleString('vi-VN', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit'
+    });
   };
 
   return (
@@ -24,7 +52,10 @@ export default function OrderSuccess() {
       <Header />
       <main className="orderSuccess">
         <div className="container">
-          {!order ? (
+          
+          {loading && <div style={{textAlign: 'center', padding: '50px'}}>Loading order details...</div>}
+
+          {!loading && !order ? (
             <section className="orderSuccess__card">
               <h1>Order not found</h1>
               <p>
@@ -35,7 +66,7 @@ export default function OrderSuccess() {
                 <Link to="/menu">Return to menu</Link>
               </div>
             </section>
-          ) : (
+          ) : !loading && order && (
             <section className="orderSuccess__card">
               <p className="orderSuccess__eyebrow">Thank you</p>
               <h1>Order placed successfully!</h1>
@@ -43,25 +74,27 @@ export default function OrderSuccess() {
                 Keep this code to track progress or share with customer support
                 if needed.
               </p>
-              <div className="orderSuccess__code">{order.id}</div>
+              
+              {/* Hiển thị ID từ DB */}
+              <div className="orderSuccess__code">{order.order_id || order.id}</div>
 
               <div className="orderSuccess__summary">
                 <div>
                   <span>Total</span>
-                  <strong>{formatVND(order.prices.total)}</strong>
+                  {/* Hiển thị total_amount từ DB */}
+                  <strong>{formatVND(order.total_amount)}</strong>
                 </div>
                 <div>
                   <span>Payment</span>
-                  <strong>
-                    {order.payment === "bank"
-                      ? "Bank transfer"
-                      : "Cash on delivery"}
+                  <strong style={{ textTransform: 'capitalize' }}>
+                    {order.payment === "bank" ? "Bank Transfer" : "Cash on Delivery"}
                   </strong>
                 </div>
                 <div>
-                  <span>Delivery</span>
+                  <span>Delivery Time</span>
+                  {/* Hiển thị receive_time từ DB */}
                   <strong>
-                    {order.time.date} · {order.time.slot}
+                    {formatTime(order.receive_time)}
                   </strong>
                 </div>
               </div>

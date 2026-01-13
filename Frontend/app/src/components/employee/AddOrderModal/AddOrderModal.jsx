@@ -1,21 +1,11 @@
-// src/components/employee/AddOrderModal/AddOrderModal.jsx
 import React, { useState, useEffect } from 'react';
 import { Modal, Row, Col, Input, Button, DatePicker, TimePicker, InputNumber, Select, message, List, Avatar } from 'antd';
 import dayjs from 'dayjs';
-// Tận dụng lại file CSS cũ để giống giao diện 100%
 import styles from '../OrderDetail/OrderDetail.module.css'; 
 import api from '../../../lib/axiosEmployee';
 
 const { TextArea } = Input;
-
-// Dữ liệu giả danh sách bánh để chọn
-// const MOCK_PRODUCT_LIST = [
-//   { id: 'E634KT', name: 'Tiramisu Cake', price: 299000 },
-//   { id: '80F520', name: 'Cheese Cake', price: 360000 },
-//   { id: 'SW788M', name: 'Red Velvet', price: 120000 },
-//   { id: 'PP9L05C', name: 'Matcha Mousse', price: 59000 },
-//   { id: 'NZ60D72', name: 'Black Forest', price: 599000 },
-// ];
+const { Option } = Select;
 
 const AddOrderModal = ({ open, onCancel, onSave }) => {
   // --- STATE QUẢN LÝ FORM ---
@@ -23,304 +13,265 @@ const AddOrderModal = ({ open, onCancel, onSave }) => {
     receiver: {
       name: '',
       phone: '',
+      address: '',
     },
-    address: '',
-    time: {
-      slot: dayjs(),
-      date: dayjs(),
-    },
-    customer: { note: '' },
+    note: ''
   });
 
-  const [products, setProducts] = useState([]);
-  const [loadingProducts, setLoadingProducts] = useState(false);
-  const [searchKeyword, setSearchKeyword] = useState("");
-  const [shippingCost, setShippingCost] = useState(0);
-  const [cart, setCart] = useState([]); // Danh sách bánh đã chọn
-  const [isProductPickerOpen, setIsProductPickerOpen] = useState(false); // Trạng thái mở modal chọn bánh
+  const [items, setItems] = useState([]);
+  const [paymentMethod, setPaymentMethod] = useState('cash'); // Mặc định chữ thường
+  const [deliveryDate, setDeliveryDate] = useState(dayjs());
+  const [deliveryTime, setDeliveryTime] = useState(dayjs());
+  
+  // State cho tìm kiếm sản phẩm
+  const [isProductPickerOpen, setIsProductPickerOpen] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [products, setProducts] = useState([]); // List sản phẩm từ API
+  const [filteredProducts, setFilteredProducts] = useState([]);
 
-  // Reset form khi mở modal
+  // Lấy danh sách sản phẩm khi mở modal
   useEffect(() => {
     if (open) {
-      setCustomerInfo({
-        receiver: {
-            name: '',
-            phone: '',
-        },
-        address: '',
-        time: {
-            slot: dayjs(),
-            date: dayjs(),
-        },
-        customer: { note: '' },
-      });
-      setCart([]);
-      setShippingCost(0);
+      fetchProducts();
     }
   }, [open]);
 
   useEffect(() => {
-    if (isProductPickerOpen) {
-      fetchProducts();
+    if(!searchKeyword.trim()){
+        setFilteredProducts(products);
+    } else {
+        const lower = searchKeyword.toLowerCase();
+        const filtered = products.filter(p => p.name.toLowerCase().includes(lower) || p.id.toLowerCase().includes(lower));
+        setFilteredProducts(filtered);
     }
-  }, [isProductPickerOpen]);
+  }, [searchKeyword, products]);
 
   const fetchProducts = async () => {
-    try {
-      setLoadingProducts(true);
-      const res = await api(`/employee/menu`);
-      setProducts(res.data);
-    } catch (error) {
-      message.error("Failed to load products");
-    } finally {
-      setLoadingProducts(false);
+      try {
+          // Gọi API lấy menu (API này không cần auth hoặc quyền staff)
+          const res = await api.get('/employee/menu'); 
+          setProducts(res.data);
+          setFilteredProducts(res.data);
+      } catch (error) {
+          console.error("Failed to fetch products", error);
+          message.error("Failed to load product list");
+      }
+  }
+
+  // --- HÀM HELPER TẠO ID ĐÚNG CHUẨN DB MỚI ---
+  const generateOrderId = () => {
+    const numbers = "0123456789";
+    let res = "ORD"; 
+    for(let i = 0; i < 9; i++){
+        res += numbers.charAt(Math.floor(Math.random() * numbers.length));
     }
+    return res; // Ví dụ: ORD123456789
   };
 
-  // --- HÀM XỬ LÝ ---
-
-  const filteredProducts = products.filter(product =>
-      product.name.toLowerCase().includes(searchKeyword.toLowerCase())
-  );
-  
-  // Tính tổng tiền
-  const calculateTotal = () => {
-    const productTotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
-    return productTotal + shippingCost;
-  };
-
-  // Thêm bánh vào danh sách
   const handleAddProductToCart = (product) => {
-    const existingItem = cart.find(item => item.id === product.id);
-    if (existingItem) {
-      // Nếu có rồi thì tăng số lượng
-      setCart(cart.map(item => 
-        item.id === product.id ? { ...item, qty: item.qty + 1 } : item
-      ));
-    } else {
-      // Nếu chưa có thì thêm mới
-      setCart([...cart, { ...product, qty: 1 }]);
-    }
-    message.success(`Added ${product.name}`);
-  };
+      const existing = items.find(i => i.id === product.id);
+      if(existing){
+          setItems(items.map(i => i.id === product.id ? {...i, qty: i.qty + 1} : i));
+      } else {
+          setItems([...items, { ...product, qty: 1 }]);
+      }
+      message.success(`Added ${product.name}`);
+  }
 
-  // Xóa bánh khỏi danh sách
   const handleRemoveItem = (id) => {
-    setCart(cart.filter(item => item.id !== id));
-  };
+      setItems(items.filter(i => i.id !== id));
+  }
 
-  // Thay đổi số lượng trong bảng
-  const handleQuantityChange = (id, newQuantity) => {
-    if (newQuantity < 1) return;
-    setCart(cart.map(item => 
-      item.id === id ? { ...item, qty: newQuantity } : item
-    ));
-  };
+  const updateQty = (id, val) => {
+      setItems(items.map(i => i.id === id ? {...i, qty: val} : i));
+  }
 
-  // Lưu đơn hàng
-  const handleSave = () => {
-    if (cart.length === 0) {
-      message.error("Please add at least one product!");
-      return;
-    }
+  const calculateTotal = () => {
+      return items.reduce((acc, item) => acc + (item.price * item.qty), 0);
+  }
+
+  const handleSave = async () => {
+    // Validate cơ bản
     if (!customerInfo.receiver.name || !customerInfo.receiver.phone) {
-        message.error("Please fill in customer info!");
-        return;
+      return message.error('Please enter receiver name and phone');
+    }
+    if (items.length === 0) {
+      return message.error('Please add at least one product');
     }
 
+    // Giả lập Customer ID (Nếu hệ thống có chọn khách hàng thì lấy ID thật)
+    // Nếu là khách vãng lai, backend cần xử lý. Ở đây tạm gửi 0 hoặc ID khách vãng lai mặc định
+    // Lưu ý: DB bắt buộc customer_id. Bạn nên có logic chọn User hoặc tạo User nhanh.
+    // Tạm thời mình để cus_id là null để backend xử lý (nếu backend cho phép) hoặc bạn phải fix cứng 1 ID khách vãng lai trong DB.
+    // Tuy nhiên, theo model bạn gửi, cus_id là bắt buộc. 
+    // GỢI Ý: Hãy tạo sẵn 1 user "Walk-in Guest" trong DB và lấy ID đó điền vào đây.
+    const WALK_IN_GUEST_ID = 1; // Ví dụ ID 1 là khách vãng lai
 
-    const orderData = {
-      ...customerInfo,
-      items: cart,
-      shippingCost,
-      prices: { total: calculateTotal() },
-      status: 'pending' // Mặc định đơn mới là pending
+    const payload = {
+      id: generateOrderId(), // QUAN TRỌNG: ID đúng format
+      cus_id: WALK_IN_GUEST_ID, // Cần ID khách hàng hợp lệ
+      prices: {
+          total: calculateTotal()
+      },
+      payment: paymentMethod.toLowerCase(), // 'cash', 'bank'...
+      time: {
+          slot: deliveryTime.format('HH:mm'),
+          date: deliveryDate.format('YYYY-MM-DD')
+      },
+      customer: {
+          note: customerInfo.note
+      },
+      address: customerInfo.receiver.address || "Tại cửa hàng",
+      receiver: {
+          name: customerInfo.receiver.name,
+          phone: customerInfo.receiver.phone
+      },
+      status: 'pending', // Chữ thường
+      items: items.map(i => ({
+          id: i.id,
+          qty: i.qty,
+          price: i.price
+      }))
     };
-    
-    onSave(orderData);
-    onCancel();
+
+    try {
+        await onSave(payload); // Gọi hàm save từ props (thường là gọi API createOrder)
+        // Reset form
+        setItems([]);
+        setCustomerInfo({ receiver: { name: '', phone: '', address: ''}, note: '' });
+        setIsProductPickerOpen(false);
+    } catch (error) {
+        console.error(error);
+        // message error đã được handle ở parent hoặc axios interceptor
+    }
   };
 
   return (
     <>
       <Modal
-        title={null}
+        title={<div className={styles.headerTitle} style={{fontSize: 20}}>Create New Order</div>}
         open={open}
         onCancel={onCancel}
+        width={900}
         footer={null}
-        width={1000}
-        centered
-        maskClosable={false}
+        style={{ top: 20 }}
       >
-        <div style={{ padding: '10px' }}>
-          {/* Header */}
-          <div className={styles.headerContainer}>
-            <h2 className={styles.headerTitle}>CREATE NEW ORDER</h2>
-          </div>
-          <p className={styles.orderTime} style={{color: '#666'}}>
-            {/* Create at: {dayjs().format('YYYY-MM-DD HH:mm:ss')} */}
-          </p>
-
+        <div className={styles.modalContent}>
+          {/* --- CỘT TRÁI: THÔNG TIN KHÁCH & SẢN PHẨM --- */}
           <Row gutter={24}>
-            {/* --- CỘT TRÁI: NHẬP THÔNG TIN KHÁCH --- */}
-            <Col span={10}>
-              <div className={styles.tableHeaderRed}>Customer Information</div>
-              <table className={styles.infoTable}>
-                <tbody>
-                  <tr>
-                    <td className={styles.cellBold}>Receiver (*)</td>
-                    <td className={styles.cell} style={{padding: 0}}>
+            <Col span={14} style={{ borderRight: '1px solid #f0f0f0' }}>
+              <h3 style={{color: '#b71c1c', marginBottom: 15}}>Customer Information</h3>
+              <Row gutter={16}>
+                  <Col span={12}>
                       <Input 
-                        variant="borderless"
-                        placeholder="Name..." 
+                        placeholder="Receiver Name" 
                         value={customerInfo.receiver.name}
                         onChange={e => setCustomerInfo({...customerInfo, receiver: {...customerInfo.receiver, name: e.target.value}})}
+                        style={{marginBottom: 10}}
                       />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className={styles.cellBold}>Phone (*)</td>
-                    <td className={styles.cell} style={{padding: 0}}>
+                  </Col>
+                  <Col span={12}>
                       <Input 
-                        variant="borderless"
-                        placeholder="Phone..." 
+                        placeholder="Phone Number" 
                         value={customerInfo.receiver.phone}
                         onChange={e => setCustomerInfo({...customerInfo, receiver: {...customerInfo.receiver, phone: e.target.value}})}
+                        style={{marginBottom: 10}}
                       />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className={styles.cellBold}>Address</td>
-                    <td className={styles.cell} style={{padding: 0}}>
-                      <TextArea 
-                        variant="borderless"
-                        autoSize={{ minRows: 1, maxRows: 3 }}
-                        placeholder="Address..." 
-                        value={customerInfo.address}
-                        onChange={e => setCustomerInfo({...customerInfo, address: e.target.value})}
+                  </Col>
+                  <Col span={24}>
+                      <Input 
+                        placeholder="Address (Leave empty if eat-in)" 
+                        value={customerInfo.receiver.address}
+                        onChange={e => setCustomerInfo({...customerInfo, receiver: {...customerInfo.receiver, address: e.target.value}})}
+                        style={{marginBottom: 10}}
                       />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className={styles.cellBold}>Receiving date</td>
-                    <td className={styles.cell} style={{padding: 0}}>
-                      <DatePicker 
-                        variant="borderless"
-                        style={{width: '100%'}} 
-                        value={customerInfo.time.date}
-                        onChange={val => setCustomerInfo({...customerInfo, time: {...customerInfo.time, date: val}})}
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className={styles.cellBold}>Receiving time</td>
-                    <td className={styles.cell} style={{padding: 0}}>
-                       <TimePicker 
-                        variant="borderless" 
-                        format="HH:mm" 
-                        style={{width: '100%'}}
-                        value={customerInfo.time.slot}
-                        onChange={val => setCustomerInfo({...customerInfo, time: {...customerInfo.time, slot: val}})}
-                       />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td className={styles.cellBold}>Note</td>
-                    <td className={styles.cell} style={{padding: 0}}>
-                       <Input 
-                        variant="borderless"
-                        placeholder="Note..." 
-                        value={customerInfo.customer.note}
-                        onChange={e => setCustomerInfo({...customerInfo, customer: {...customerInfo.customer, note: e.target.value}})}
-                      />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                  </Col>
+              </Row>
+
+              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, marginBottom: 10}}>
+                  <h3 style={{color: '#b71c1c', margin: 0}}>Order Items</h3>
+                  <Button type="dashed" onClick={() => setIsProductPickerOpen(true)}>+ Add Product</Button>
+              </div>
+
+              <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+                <List
+                    itemLayout="horizontal"
+                    dataSource={items}
+                    renderItem={(item) => (
+                    <List.Item
+                        actions={[
+                            <Button type="text" danger onClick={() => handleRemoveItem(item.id)}>Remove</Button>
+                        ]}
+                    >
+                        <List.Item.Meta
+                        avatar={<Avatar src={item.image} shape="square" size="large" />}
+                        title={item.name}
+                        description={
+                            <div style={{display: 'flex', gap: 10, alignItems: 'center'}}>
+                                <span>{item.price.toLocaleString()} đ</span>
+                                <InputNumber min={1} value={item.qty} onChange={(val) => updateQty(item.id, val)} size="small" />
+                            </div>
+                        }
+                        />
+                        <div>{(item.price * item.qty).toLocaleString()} đ</div>
+                    </List.Item>
+                    )}
+                />
+                {items.length === 0 && <div style={{textAlign: 'center', color: '#999', padding: 20}}>No items added</div>}
+              </div>
             </Col>
 
-            {/* --- CỘT PHẢI: CHỌN SẢN PHẨM --- */}
-            <Col span={14}>
-              <div className={styles.tableHeaderYellow}>Order Details</div>
-              
-              <div style={{maxHeight: '300px', overflowY: 'auto'}}>
-                <table className={styles.detailTable}>
-                  <thead>
-                    <tr>
-                      <th className={styles.tableHeaderCell}>No.</th>
-                      <th className={styles.tableHeaderCell}>Product</th>
-                      <th className={styles.tableHeaderCell}>Qty</th>
-                      <th className={styles.tableHeaderCell}>Price</th>
-                      <th className={styles.tableHeaderCell}>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cart.map((item, index) => (
-                      <tr key={item.id}>
-                        <td className={styles.cell}>{index + 1}</td>
-                        <td className={styles.cell} style={{textAlign: 'left'}}>
-                          <div>{item.name}</div>
-                          <small style={{color: '#888'}}>{item.id}</small>
-                        </td>
-                        <td className={styles.cell}>
-                          <InputNumber 
-                            min={1} 
-                            value={item.qty}
-                            onChange={(val) => handleQuantityChange(item.id, val)}
-                            size="small"
-                            style={{width: '60px'}}
-                          />
-                        </td>
-                        <td className={styles.cell}>{(item.price * item.qty).toLocaleString()}</td>
-                        <td className={styles.cell}>
-                           <Button danger size="small" type="text" onClick={() => handleRemoveItem(item.id)}>X</Button>
-                        </td>
-                      </tr>
-                    ))}
-                    {cart.length === 0 && (
-                       <tr>
-                         <td colSpan={5} className={styles.cell} style={{color: '#999', fontStyle: 'italic'}}>
-                           No products added yet.
-                         </td>
-                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+            {/* --- CỘT PHẢI: THANH TOÁN & TỔNG --- */}
+            <Col span={10}>
+               <h3 style={{color: '#b71c1c', marginBottom: 15}}>Payment & Delivery</h3>
+               
+               <div style={{marginBottom: 15}}>
+                   <label style={{fontWeight: 'bold', display: 'block', marginBottom: 5}}>Payment Method</label>
+                   <Select 
+                    value={paymentMethod} 
+                    onChange={setPaymentMethod} 
+                    style={{width: '100%'}}
+                   >
+                       <Option value="cash">Cash</Option>
+                       <Option value="bank">Bank Transfer</Option>
+                       <Option value="momo">Momo</Option>
+                       <Option value="card">Credit Card</Option>
+                   </Select>
+               </div>
 
-              {/* Button mở modal chọn bánh */}
-              <Button 
-                type="dashed" 
-                style={{width: '100%', marginTop: '10px', color: '#1890ff', borderColor: '#1890ff'}}
-                onClick={() => setIsProductPickerOpen(true)}
-              >
-                + Add Product
-              </Button>
+               <div style={{marginBottom: 15}}>
+                   <label style={{fontWeight: 'bold', display: 'block', marginBottom: 5}}>Receive Time</label>
+                   <div style={{display: 'flex', gap: 10}}>
+                       <DatePicker value={deliveryDate} onChange={setDeliveryDate} format="DD/MM/YYYY" style={{flex: 1}} />
+                       <TimePicker value={deliveryTime} onChange={setDeliveryTime} format="HH:mm" style={{flex: 1}} />
+                   </div>
+               </div>
 
-              <div className={styles.shippingRow}>
-                <span>Shipping Cost</span>
-                <InputNumber 
-                  value={shippingCost}
-                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                  onChange={val => setShippingCost(val)}
-                  variant="borderless"
-                  style={{width: 100, fontWeight: 'bold', backgroundColor: 'transparent'}}
-                  className="shipping-input"
-                />
-              </div>
-              <div className={styles.totalRow}>
-                <span className={styles.totalLabel}>Total</span>
-                <span className={styles.totalValue}>{calculateTotal().toLocaleString()} đ</span>
-              </div>
+               <div style={{marginBottom: 20}}>
+                   <label style={{fontWeight: 'bold', display: 'block', marginBottom: 5}}>Note</label>
+                   <TextArea 
+                    rows={3} 
+                    value={customerInfo.note}
+                    onChange={e => setCustomerInfo({...customerInfo, note: e.target.value})}
+                   />
+               </div>
+
+               <div style={{backgroundColor: '#fff7e6', padding: 15, borderRadius: 8}}>
+                   <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 10}}>
+                       <span>Subtotal:</span>
+                       <span>{calculateTotal().toLocaleString()} đ</span>
+                   </div>
+                   <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: 10}}>
+                       <span>Shipping:</span>
+                       <span>0 đ</span>
+                   </div>
+                   <div style={{display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: 16, color: '#b71c1c', borderTop: '1px dashed #ccc', paddingTop: 10}}>
+                       <span>Total:</span>
+                       <span>{calculateTotal().toLocaleString()} đ</span>
+                   </div>
+               </div>
             </Col>
           </Row>
-
-          {/* Internal Note */}
-          <div className={styles.noteContainer}>
-            <div className={styles.noteHeader}>Internal Note</div>
-            <TextArea rows={2} style={{ borderRadius: 0 }} />
-          </div>
 
           {/* Footer Buttons */}
           <div style={{ textAlign: 'right', marginTop: 20, display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
@@ -337,7 +288,6 @@ const AddOrderModal = ({ open, onCancel, onSave }) => {
         onCancel={() => setIsProductPickerOpen(false)}
         footer={null}
       >
-        {/* SEARCH BAR */}
         <Input.Search
             placeholder="Search by product name"
             allowClear
@@ -346,21 +296,24 @@ const AddOrderModal = ({ open, onCancel, onSave }) => {
             style={{ marginBottom: 12 }}
         />
 
-        <List
-          itemLayout="horizontal"
-          dataSource={filteredProducts}
-          locale={{ emptyText: "No products found" }}
-          renderItem={(item) => (
-            <List.Item
-              actions={[<Button type="primary" size="small" onClick={() => handleAddProductToCart(item)}>Add</Button>]}
-            >
-              <List.Item.Meta
-                title={item.name}
-                description={`Price: ${item.price.toLocaleString()} đ | ID: ${item.id}`}
-              />
-            </List.Item>
-          )}
-        />
+        <div style={{height: 400, overflowY: 'auto'}}>
+            <List
+            itemLayout="horizontal"
+            dataSource={filteredProducts}
+            locale={{ emptyText: "No products found" }}
+            renderItem={(item) => (
+                <List.Item
+                actions={[<Button type="primary" size="small" onClick={() => handleAddProductToCart(item)}>Add</Button>]}
+                >
+                <List.Item.Meta
+                    avatar={<Avatar src={item.image || item.images} />}
+                    title={item.name}
+                    description={`Price: ${Number(item.price).toLocaleString()} đ | Stock: ${item.stock || item.count}`}
+                />
+                </List.Item>
+            )}
+            />
+        </div>
       </Modal>
     </>
   );

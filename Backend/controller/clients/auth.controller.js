@@ -11,13 +11,15 @@ module.exports.signin = async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        if (user.role !== 1) {
+        // SỬA: Check role theo string 'customer' thay vì số 1
+        if (user.role !== 'customer') {
             return res.status(403).json({ error: 'You do not have permission to login here' });
         }
 
         const match = await bcrypt.compare(password, user.password);
         if (!match) return res.status(401).json({ error: 'Invalid password' });
 
+        // Token giữ nguyên cấu trúc
         const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, process.env.JWT_SECRET, {
         expiresIn: '3h',
         });
@@ -44,12 +46,10 @@ module.exports.signup = async(req, res) => {
     try {
     const {name, email, password } = req.body;
 
-    // Kiểm tra thiếu dữ liệu
     if (!email || !password || !name) {
-      return res.status(400).json({ error: 'Email and password are required' });
+      return res.status(400).json({ error: 'Email, password and name are required' });
     }
 
-    // Kiểm tra user tồn tại
     const existing = await Account.findByEmail(email);
     if (existing) {
       return res.status(400).json({ error: 'User already exists' });
@@ -57,56 +57,50 @@ module.exports.signup = async(req, res) => {
 
     await Account.transaction(true);
 
-    // Mã hóa mật khẩu
     req.body.password = await bcrypt.hash(password, 10);
 
-    // Lưu user mới vào DB
+    // Model signUp đã sửa để insert vào user_account
     const result = await Account.signUp(req.body);
-    result.name = name;
+    result.name = name; // Gán lại name để hàm addCus dùng tách chuỗi
 
+    // Model addCus đã sửa để update first_name/last_name và insert vào customer
     await Account.addCus(result);
     await Account.transaction(false);
 
-    // Tạo JWT token
-    // const token = jwt.sign(
-    //   { id: result.rows[0].id, email },
-    //   process.env.JWT_SECRET,
-    //   { expiresIn: '1h' }
-    // );
-
     return res.status(201).json({
       message: 'Signup successful',
-      // token,
-      user: result,
+      user: { id: result.id, email: result.email, fullname: name }
     });
   } catch (err) {
+    await Account.transaction(false); // Rollback nếu lỗi (cần implement rollback trong model nếu chưa có, hoặc catch transaction)
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 }
 
 module.exports.updateUser = async(req, res) => {
-  const { id } = req.params;
   const userId = parseInt(req.params.id);
+  // Bảo mật: Chỉ cho phép update chính mình
+  if (req.user.id !== userId) {
+    return res.status(403).json({ error: "You can only update your own profile" });
+  }
+
   const data = {
-    name: req.body.name,
+    name: req.body.name, // Model sẽ tự tách thành first_name, last_name
     email: req.body.email,
     id: userId,
     phone: req.body.phone,
     address: req.body.address,
     dob: req.body.dob,
   }
-  if (req.user.id != id) {
-    return res.status(403).json({ error: "You can only update your own profile" });
-  }
 
   try {
     const result = await Account.update(data);
-    if (result.rowCount === 0) {
+    if (!result) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.json(result); // send updated user info back to frontend
+    res.json(result);
   } catch (err) {
     console.error("Update failed:", err);
     res.status(500).json({ error: "Server error" });
@@ -119,6 +113,7 @@ module.exports.userProfile = async(req, res) => {
     return res.status(403).json({ error: "Forbidden" });
 
   const user = await Account.findById(userId);
+  if (!user) return res.status(404).json({ error: "User not found" });
   res.json(user);
 }
 
@@ -134,12 +129,13 @@ module.exports.logout = async (req, res) => {
 module.exports.changePassword = async (req, res) => {
   const userId = parseInt(req.params.id);
   const {currentPassword, newPassword} = req.body;
-  if (req.user.id != userId) {
+  
+  if (req.user.id !== userId) {
     return res.status(403).json({ error: "You can only change your own password" });
   }
 
   const result = await Account.getPassword(userId);
-  if (result.rowCount === 0) {
+  if (!result) {
       return res.status(404).json({ error: "User not found" });
   }
 

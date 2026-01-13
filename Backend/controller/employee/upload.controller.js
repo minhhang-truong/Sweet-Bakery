@@ -7,7 +7,7 @@ exports.uploadAvatar = async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const userId = req.user.id; // from verifyToken middleware
+    const userId = req.user.id; // ID lấy từ token (user_id)
     const publicId = `avatars/user_${userId}`;
 
     const uploadFromBuffer = () =>

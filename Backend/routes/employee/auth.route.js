@@ -9,10 +9,11 @@ router.post("/signin", controller.signin);
 
 router.post("/logout", controller.logout);
 
-router.put("/profile/:id", verifyToken, authorize(2), controller.updateProfile);
+// SỬA: authorize(2) -> authorize('staff')
+router.put("/profile/:id", verifyToken, authorize('staff'), controller.updateProfile);
 
-router.get("/profile/:id", verifyToken, authorize(2), controller.userProfile);
+router.get("/profile/:id", verifyToken, authorize('staff'), controller.userProfile);
 
-router.put("/change-password/:id", verifyToken, authorize(2), controller.changePassword);
+router.put("/change-password/:id", verifyToken, authorize('staff'), controller.changePassword);
 
 module.exports = router;

@@ -5,6 +5,7 @@ const verifyToken = require('../../middleware/auth.middleware');
 const controller = require("../../controller/employee/product.controller");
 const { authorize } = require('../../middleware/authorize.middleware');
 
-router.get("/", verifyToken, authorize(2), controller.getStock);
+// SỬA: authorize(2) -> authorize('staff')
+router.get("/", verifyToken, authorize('staff'), controller.getStock);
 
 module.exports = router;

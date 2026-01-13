@@ -1,4 +1,3 @@
-// src/pages/employee/Profile/Profile.jsx
 import React, { useEffect, useState } from 'react';
 import { Input, Button, message, DatePicker, Spin } from 'antd';
 import {
@@ -18,230 +17,179 @@ import AvatarUpload from "../../../components/employee/Upload/Upload.jsx";
 
 const Account = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
 
-  // ---------------- STATE ----------------
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
 
-  // ---------------- FETCH PROFILE ----------------
+  // FETCH PROFILE
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const res = await api.get(`/employee/auth/profile/${user.id}`);
         const data = res.data;
 
+        // SỬA: Map dữ liệu từ Backend (snake_case hoặc tên cột DB mới) sang State Frontend
         setProfile({
           id: data.id,
-          fullName: data.fullname,
-          avatar: data.avatar ?? null,
-
-          phone: data.phone ?? '',
-          email: data.email ?? '',
-          address: data.address ?? '',
-          dateOfBirth: data.dob ?? null,
-
-          loginEmail: data.loginEmail,
-
+          fullName: data.fullname, // Backend trả về 'fullname' (do model đã concat)
+          email: data.email,       // login email
+          phone: data.phone,
+          // DB mới có thể trả về 'address' (chuỗi full) hoặc 'address_detail'
+          address: data.address || data.address_detail || "", 
+          // DB trả về 'hire_date'
+          hireDate: data.hire_date ? dayjs(data.hire_date).format('DD/MM/YYYY') : 'N/A', 
+          dob: data.dob ? dayjs(data.dob) : null,
           department: data.department,
-          hireDate: toISODate(data.hire_date),
-          role: "Seller", //data.role
-          status: "Working", //data.status,
+          avatar: data.avatar,
+          role: 'Staff', // Hardcode hoặc lấy data.role
+          status: 'Active' // Hardcode hoặc data.status
         });
-
-      } catch (err) {
-        message.error('Failed to load profile');
+      } catch (error) {
+        console.error("Failed to load profile", error);
+        message.error("Failed to load profile information");
       } finally {
         setPageLoading(false);
       }
     };
 
-    fetchProfile();
-  }, []);
+    if (user && user.id) {
+      fetchProfile();
+    }
+  }, [user]);
 
-  if (!profile) {
-    return (
-      <div style={{ textAlign: 'center', marginTop: 100 }}>
-        <Spin size="large" />
-      </div>
-    );
-  }
-
-  // ---------------- INPUT HANDLER ----------------
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setProfile(prev => ({ ...prev, [name]: value }));
-  };
-
-  // ---------------- AVATAR UPLOAD ----------------
-  
-
-  // ---------------- SAVE PROFILE ----------------
   const handleSave = async () => {
     try {
-      await api.put(`/employee/auth/profile/${user.id}`, {
-        phone: profile.phone,
-        email: profile.email,
-        address: profile.address,
-        dob: profile.dateOfBirth,
-        avatar: profile.avatar
-      });
+      setLoading(true);
+      // Gửi dữ liệu lên Backend
+      // Backend cần 'fullname' để tách thành first/last name
+      const payload = {
+          fullname: profile.fullName, 
+          phone: profile.phone,
+          address: profile.address,
+          dob: profile.dob ? toISODate(profile.dob) : null,
+          avatar: profile.avatar
+      };
 
+      await api.put(`/employee/auth/profile/${user.id}`, payload);
+      
       message.success("Profile updated successfully");
-    } catch (err) {
-      message.error("Update failed");
+      
+      // Update context nếu cần
+      if(updateUser) {
+          updateUser({...user, fullname: profile.fullName, avatar: profile.avatar});
+      }
+
+    } catch (error) {
+      console.error(error);
+      message.error("Failed to update profile");
+    } finally {
+      setLoading(false);
     }
   };
 
   if (pageLoading) {
-    return (
-      <div style={{ textAlign: 'center', marginTop: 100 }}>
-        <Spin size="large" />
-      </div>
-    );
+    return <div style={{textAlign: 'center', marginTop: 50}}><Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />} /></div>;
   }
 
-  // ---------------- RENDER ----------------
   return (
-    <div>
+    <div className={styles.container}>
       <Header />
+      <div className={styles.content}>
+        <h2 className={styles.pageTitle}>My Profile</h2>
+        
+        <div className={styles.card}>
+          <div className={styles.cardContent}>
+            
+            {/* Left: Avatar */}
+            <div className={styles.leftColumn}>
+              <div className={styles.avatarSection}>
+                 <AvatarUpload 
+                    avatar={profile.avatar} 
+                    setProfile={setProfile} // Truyền setter để cập nhật state sau khi upload
+                 />
+              </div>
+              <Button 
+                icon={<LockOutlined />} 
+                className={styles.btnChangePassword}
+                onClick={() => navigate('/employee/change-password')}
+              >
+                Change Password
+              </Button>
+            </div>
 
-      <div className={styles.container}>
-        <div className={styles.pageTitle}>MY PROFILE</div>
-        <div className={styles.divider} />
-
-        <div className={styles.profileContent}>
-          {/* AVATAR */}
-          <div className={styles.avatarSection}>
-            <AvatarUpload avatar={profile.avatar} setProfile={setProfile} />
-          </div>
-
-          {/* FORM */}
-          <div className={styles.formSection}>
-
-            {/* PERSONAL INFORMATION */}
-            <div>
-              <div className={styles.headerRed}>Personal Information</div>
+            {/* Right: Info Form */}
+            <div className={styles.rightColumn}>
               <table className={styles.infoTable}>
                 <tbody>
-
                   <tr className={styles.row}>
-                    <td className={styles.labelCell}>ID</td>
+                    <td className={styles.labelCell}>Full Name</td>
                     <td className={styles.valueCell}>
-                      <Input value={user.id} disabled variant='borderless' />
-                    </td>
-                  </tr>
-
-                  <tr className={styles.row}>
-                    <td className={styles.labelCell}>Full name</td>
-                    <td className={styles.valueCell}>
-                      <Input value={profile.fullName} disabled variant='borderless' />
-                    </td>
-                  </tr>
-
-                  <tr className={styles.row}>
-                    <td className={styles.labelCell}>Date of birth</td>
-                    <td className={styles.valueCell}>
-                      <DatePicker
-                        value={profile.dateOfBirth ? dayjs(profile.dateOfBirth) : null}
-                        allowClear={true}
-                        placeholder="Select date of birth"
-                        disabledDate={(current) => current && current > dayjs().endOf('day')}
-                        onChange={(date) =>
-                          setProfile(prev => ({
-                            ...prev,
-                            dateOfBirth: date ? date.format('YYYY-MM-DD') : null
-                          }))
-                        }
+                      <Input 
+                        value={profile.fullName} 
+                        onChange={(e) => setProfile({...profile, fullName: e.target.value})}
                       />
                     </td>
                   </tr>
-
+                  
                   <tr className={styles.row}>
-                    <td className={styles.labelCell}>Phone number</td>
+                    <td className={styles.labelCell}>Email (Login)</td>
                     <td className={styles.valueCell}>
-                      <Input name="phone" value={profile.phone} onChange={handleInputChange} />
+                      <Input value={profile.email} disabled className={styles.disabledInput} />
                     </td>
                   </tr>
 
                   <tr className={styles.row}>
-                    <td className={styles.labelCell}>Email</td>
+                    <td className={styles.labelCell}>Phone</td>
                     <td className={styles.valueCell}>
-                      <Input name="email" value={profile.email} onChange={handleInputChange} />
+                      <Input 
+                        value={profile.phone} 
+                        onChange={(e) => setProfile({...profile, phone: e.target.value})}
+                      />
                     </td>
                   </tr>
 
                   <tr className={styles.row}>
                     <td className={styles.labelCell}>Address</td>
                     <td className={styles.valueCell}>
-                      <Input name="address" value={profile.address} onChange={handleInputChange} />
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* LOGIN INFORMATION */}
-            <div>
-              <div className={styles.headerGreen}>Login Information</div>
-              <table className={styles.infoTable}>
-                <tbody>
-                  <tr className={styles.row}>
-                    <td className={styles.labelCell}>Login email</td>
-                    <td className={styles.valueCell}>
-                      <Input value={profile.loginEmail} disabled />
+                      <Input 
+                        value={profile.address} 
+                        onChange={(e) => setProfile({...profile, address: e.target.value})}
+                      />
                     </td>
                   </tr>
 
                   <tr className={styles.row}>
-                    <td className={styles.labelCell}>Password</td>
+                    <td className={styles.labelCell}>Date of Birth</td>
                     <td className={styles.valueCell}>
-                      <span className={styles.passwordMask}>********</span>
-                      <Button
-                        type="link"
-                        icon={<LockOutlined />}
-                        className={styles.changePasswordBtn}
-                        onClick={() => navigate('/employee/change-password')}
-                      >
-                        Change password
-                      </Button>
+                      <DatePicker 
+                        value={profile.dob} 
+                        onChange={(date) => setProfile({...profile, dob: date})}
+                        format="DD/MM/YYYY"
+                        style={{width: '100%'}}
+                      />
                     </td>
                   </tr>
-                </tbody>
-              </table>
-            </div>
 
-            {/* ADDITIONAL INFORMATION */}
-            <div>
-              <div className={styles.headerGray}>Additional Information</div>
-              <table className={styles.infoTable}>
-                <tbody>
                   <tr className={styles.row}>
                     <td className={styles.labelCell}>Department</td>
                     <td className={styles.valueCell}>
-                      <Input value={profile.department} disabled />
+                      <Input value={profile.department} disabled className={styles.disabledInput} />
                     </td>
                   </tr>
 
                   <tr className={styles.row}>
                     <td className={styles.labelCell}>Hire date</td>
                     <td className={styles.valueCell}>
-                      <Input value={profile.hireDate} disabled />
+                      <Input value={profile.hireDate} disabled className={styles.disabledInput} />
                     </td>
                   </tr>
 
                   <tr className={styles.row}>
                     <td className={styles.labelCell}>Role</td>
                     <td className={styles.valueCell}>
-                      <Input value={profile.role} disabled />
-                    </td>
-                  </tr>
-
-                  <tr className={styles.row}>
-                    <td className={styles.labelCell}>Status</td>
-                    <td className={styles.valueCell}>
-                      <Input value={profile.status} disabled />
+                      <Input value={profile.role} disabled className={styles.disabledInput} />
                     </td>
                   </tr>
                 </tbody>
@@ -252,9 +200,12 @@ const Account = () => {
         </div>
 
         <div className={styles.buttonGroup}>
-          <Button className={styles.btnSave} onClick={handleSave}>Save</Button>
-          <Button className={styles.btnCancel} 
-            onClick={() => navigate("/employee")}>Cancel</Button>
+          <Button type="primary" loading={loading} className={styles.btnSave} onClick={handleSave}>
+            Save Changes
+          </Button>
+          <Button className={styles.btnCancel} onClick={() => navigate("/employee")}>
+            Cancel
+          </Button>
         </div>
       </div>
       <Footer/>

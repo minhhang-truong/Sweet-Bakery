@@ -3,75 +3,51 @@ import { useMemo, useState } from "react";
 import { useCart } from "../../../context/CartContext.jsx";
 import { formatVND } from "../../../lib/money";
 import { Link, useNavigate } from "react-router-dom";
-import { generateOrderId, saveOrder } from "../../../lib/orders.js";
 import api from "../../../lib/axiosCustomer.js";
 import Header from "../../../components/common/Header/Header.jsx";
 import Footer from "../../../components/common/Footer/Footer.jsx";
-
-const CITIES = ["Ha Noi", "Ho Chi Minh City", "Da Nang"];
-const DISTRICTS = {
-  "Ha Noi": ["Ba Dinh", "Hai Ba Trung", "Cau Giay"],
-  "Ho Chi Minh City": ["Quan 1", "Quan 3", "Binh Thanh"],
-  "Da Nang": ["Hai Chau", "Son Tra", "Thanh Khe"],
-};
-const WARDS = {
-  "Ba Đinh": ["Phuc Xa", "Truc Bach", "Lieu Giai"],
-  "Hai Ba Trung": ["Bach Mai", "Thanh Nhan", "Vinh Tuy"],
-  "Cau Giay": ["Dich Vong", "Nghia Tan", "Yen Hoa"],
-  "Quan 1": ["Ben Nghe", "Ben Thanh"],
-  "Quan 3": ["Vo Thi Sau", "Phuong 7"],
-  "Binh Thanh": ["26", "25"],
-  "Hai Chau": ["Hoa Thuan", "Thanh Binh"],
-  "Son Tra": ["An Hai Bac", "Phuoc My"],
-  "Thanh Khe": ["An Khe", "Chinh Gian"],
-};
+import { message } from "antd";
 
 export default function Checkout() {
   const cart = useCart();
   const nav = useNavigate();
 
-  // form state
+  // --- FORM STATE ---
   const [customer, setCustomer] = useState({ name: "", phone: "", note: "" });
   const [receiverSame, setReceiverSame] = useState(true);
   const [receiver, setReceiver] = useState({ name: "", phone: "" });
 
-  const [city, setCity] = useState("Ha Noi");
-  const [district, setDistrict] = useState("Hai Ba Trung");
-  const [ward, setWard] = useState("Bach Mai");
+  const [city, setCity] = useState("");
+  const [district, setDistrict] = useState("");
+  const [ward, setWard] = useState("");
   const [street, setStreet] = useState("");
 
-  const [invoice, setInvoice] = useState(false);
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0,10));
-  const [slot, setSlot] = useState("Morning (7PM-11PM)");
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [deliveryTime, setDeliveryTime] = useState("09:00"); 
 
   const [voucher, setVoucher] = useState("");
   const [voucherMsg, setVoucherMsg] = useState("");
-  const [payment, setPayment] = useState("bank"); // bank | cod
+  const [payment, setPayment] = useState("bank"); 
   const [showQRPopup, setShowQRPopup] = useState(false);
   const [orderPayload, setOrderPayload] = useState(null);
 
-  // phí/giảm giá
-  const shipFee = 15000;
+  // --- LOGIC TÍNH TOÁN (ĐÃ SỬA: BỎ SHIP FEE) ---
+  const shipFee = 0; // Không tính phí ship nữa
   const discount = 0;
 
   const voucherDiscount = useMemo(() => {
-    // demo: BA25 giảm 25k; FREESHIP miễn ship
     if (voucher.toUpperCase() === "BA25") return 25000;
     return 0;
   }, [voucher]);
-  const freeShip = voucher.toUpperCase() === "FREESHIP";
 
   const subtotal = cart.subtotal;
-  const total = Math.max(
-    0,
-    subtotal - discount - voucherDiscount + (freeShip ? 0 : shipFee)
-  );
+  
+  // Tổng tiền chỉ là tiền hàng - giảm giá
+  const total = Math.max(0, subtotal - discount - voucherDiscount);
 
   function applyVoucher() {
     if (voucher.toUpperCase() === "BA25") {
       setVoucherMsg("Apply code BA25: decrease by 25.000₫");
-    } else if (voucher.toUpperCase() === "FREESHIP") {
-      setVoucherMsg("Apply code FREESHIP: free ship");
     } else if (!voucher) {
       setVoucherMsg("");
     } else {
@@ -82,80 +58,99 @@ export default function Checkout() {
   function valid() {
     if (!customer.name.trim() || !customer.phone.trim()) return false;
     if (!receiverSame && (!receiver.name.trim() || !receiver.phone.trim())) return false;
-    if (!street.trim()) return false;
+    if (!street.trim() || !ward.trim() || !district.trim() || !city.trim()) return false;
     if (cart.items.length === 0) return false;
     return true;
   }
 
+  const generateSafeOrderId = () => {
+    const numbers = "0123456789";
+    let res = "ORD"; 
+    for(let i = 0; i < 9; i++){
+        res += numbers.charAt(Math.floor(Math.random() * numbers.length));
+    }
+    return res; 
+  };
+
   async function placeOrder(e) {
     e.preventDefault();
-    if (!valid()) return;
-    const cus_id = JSON.parse(localStorage.getItem("auth:user:v1")).id;
-    const orderId = generateOrderId();
-    const placedAt = new Date().toISOString();
-    const payload = {
-      id: orderId,
-      cus_id: cus_id,
-      status: "pending",
-      placedAt,
-      customer,
-      receiver: receiverSame ? customer : receiver,
-      address: `${street}, ${ward}, ${district}, ${city}`,
-      invoice,
-      time: { date, slot },
-      payment,
-      items: cart.items,
-      prices: {
-        subtotal,
-        discount,
-        voucherDiscount,
-        ship: freeShip ? 0 : shipFee,
-        total,
-      },
-      voucher: voucher.toUpperCase() || null,
-      timeline: [
-        { label: "Order placed", time: placedAt, note: "Pending" },
-        { label: "Preparing", time: null, note: "Preparing" },
-        { label: "On delivery", time: null, note: "Deliveried by shipper" },
-      ],
-    };
-
-    if (payment === "bank") {
-      setOrderPayload(payload);
-      setShowQRPopup(true);
-      return;
+    if (!valid()) {
+        message.error("Please fill in all required fields");
+        return;
     }
 
-    // If COD, proceed directly
-    await submitOrder(payload);
+    try {
+        const userStr = localStorage.getItem("auth:user:v1");
+        const cus_id = userStr ? JSON.parse(userStr).id : 1;
+        const orderId = generateSafeOrderId();
+        
+        const payload = {
+          id: orderId,
+          cus_id: cus_id,
+          status: "pending",
+          customer: { ...customer },
+          receiver: receiverSame ? { name: customer.name, phone: customer.phone } : receiver,
+          
+          // Address Object
+          address: {
+              street: street,
+              ward: ward,
+              district: district,
+              city: city
+          },
+          
+          time: { date, time: deliveryTime }, 
+          
+          payment: payment.toLowerCase(), // 'bank' | 'cod'
+          
+          items: cart.items.map(item => ({
+              id: item.id,
+              qty: item.qty,
+              price: item.price
+          })),
+          
+          prices: {
+            subtotal, discount, voucherDiscount,
+            ship: 0, 
+            total: total, // Tổng tiền sản phẩm
+          },
+        };
+
+        if (payment === "bank") {
+          setOrderPayload(payload);
+          setShowQRPopup(true);
+          return;
+        }
+
+        await submitOrder(payload);
+
+    } catch (err) {
+        console.error(err);
+        message.error("Error preparing order");
+    }
   }
     
   async function submitOrder(payload) {
     try {
       await api.post(`/api/orders`, payload);
-      saveOrder(payload);
       cart.clear();
+      message.success("Order placed successfully!");
       nav(`/order-success/${payload.id}`);
     } catch (err) {
         console.error("Failed to place order", err);
-        alert("Cannot place order. Try again.");
+        message.error(err.response?.data?.error || "Cannot place order. Try again.");
     }
   }
 
   function handleQRConfirm() {
     setShowQRPopup(false);
-    if (orderPayload) {
-      submitOrder(orderPayload);
-    }
+    if (orderPayload) submitOrder(orderPayload);
   }
 
   function handleQRCancel() {
     setShowQRPopup(false);
     setOrderPayload(null);
   }
-
-  const districts = DISTRICTS[city] || [];
-  const wards = WARDS[district] || [];
 
   return (
     <>
@@ -165,52 +160,28 @@ export default function Checkout() {
           <h1 className="co__title">Order Confirmation</h1>
 
         <div className="co__grid">
-          {/* LEFT */}
+          {/* LEFT FORM */}
           <form className="co__left" onSubmit={placeOrder}>
-            {/* Customer info */}
             <section className="co__card">
               <div className="co__cardTitle">Customer information</div>
-
               <label className="co__row">
                 <span>Full name</span>
-                <input
-                  value={customer.name}
-                  onChange={e => setCustomer(c => ({...c, name:e.target.value}))}
-                  placeholder="Nguyễn Văn A"
-                  required
-                />
+                <input value={customer.name} onChange={e => setCustomer(c => ({...c, name:e.target.value}))} placeholder="Your Name" required />
               </label>
-
               <label className="co__row">
                 <span>Phone number</span>
-                <input
-                  value={customer.phone}
-                  onChange={e => setCustomer(c => ({...c, phone:e.target.value}))}
-                  placeholder="09xx xxx xxx"
-                  required
-                />
+                <input value={customer.phone} onChange={e => setCustomer(c => ({...c, phone:e.target.value}))} placeholder="Your Phone" required />
               </label>
-
               <label className="co__row co__row--full">
                 <span>Note</span>
-                <textarea
-                  value={customer.note}
-                  onChange={e => setCustomer(c => ({...c, note:e.target.value}))}
-                  placeholder="e.g., No lettering"
-                />
+                <textarea value={customer.note} onChange={e => setCustomer(c => ({...c, note:e.target.value}))} placeholder="Note for shop..." />
               </label>
             </section>
 
-            {/* Receiver */}
             <section className="co__card">
               <div className="co__cardTitle">Recipient information</div>
-
               <label className="co__check">
-                <input
-                  type="checkbox"
-                  checked={receiverSame}
-                  onChange={e => setReceiverSame(e.target.checked)}
-                />
+                <input type="checkbox" checked={receiverSame} onChange={e => setReceiverSame(e.target.checked)} />
                 <span>Same as customer</span>
               </label>
 
@@ -218,67 +189,33 @@ export default function Checkout() {
                 <>
                   <label className="co__row">
                     <span>Full name</span>
-                    <input
-                      value={receiver.name}
-                      onChange={e => setReceiver(r => ({...r, name:e.target.value}))}
-                      placeholder="Recipient name"
-                      required
-                    />
+                    <input value={receiver.name} onChange={e => setReceiver(r => ({...r, name:e.target.value}))} placeholder="Recipient Name" required />
                   </label>
                   <label className="co__row">
                     <span>Phone number</span>
-                    <input
-                      value={receiver.phone}
-                      onChange={e => setReceiver(r => ({...r, phone:e.target.value}))}
-                      placeholder="09xx xxx xxx"
-                      required
-                    />
+                    <input value={receiver.phone} onChange={e => setReceiver(r => ({...r, phone:e.target.value}))} placeholder="Recipient Phone" required />
                   </label>
                 </>
               )}
 
-              {/* Address */}
               <div className="co__row">
-                <span>City/Province</span>
-                <select value={city} onChange={e => setCity(e.target.value)}>
-                  {CITIES.map(c => <option key={c}>{c}</option>)}
-                </select>
+                <span>City / Province</span>
+                <input value={city} onChange={e => setCity(e.target.value)} placeholder="Ex: Ha Noi" required />
               </div>
-
               <div className="co__row">
                 <span>District</span>
-                <select value={district} onChange={e => setDistrict(e.target.value)}>
-                  {districts.map(d => <option key={d}>{d}</option>)}
-                </select>
+                <input value={district} onChange={e => setDistrict(e.target.value)} placeholder="Ex: Hai Ba Trung" required />
               </div>
-
               <div className="co__row">
                 <span>Ward</span>
-                <select value={ward} onChange={e => setWard(e.target.value)}>
-                  {wards.map(w => <option key={w}>{w}</option>)}
-                </select>
+                <input value={ward} onChange={e => setWard(e.target.value)} placeholder="Ex: Bach Khoa" required />
               </div>
-
               <label className="co__row co__row--full">
                 <span>Detailed address</span>
-                <input
-                  value={street}
-                  onChange={e => setStreet(e.target.value)}
-                  placeholder="House number, street, etc."
-                  required
-                />
+                <input value={street} onChange={e => setStreet(e.target.value)} placeholder="Ex: No 1 Dai Co Viet" required />
               </label>
             </section>
 
-            {/* Invoice */}
-            <section className="co__card">
-              <label className="co__check">
-                <input type="checkbox" checked={invoice} onChange={e => setInvoice(e.target.checked)} />
-                <span>Request invoice for this order</span>
-              </label>
-            </section>
-
-            {/* Delivery time */}
             <section className="co__card">
               <div className="co__cardTitle">Delivery time</div>
               <div className="co__row">
@@ -286,141 +223,81 @@ export default function Checkout() {
                 <input type="date" value={date} onChange={e => setDate(e.target.value)} />
               </div>
               <div className="co__row">
-                <span>Delivery time slot</span>
-                <select value={slot} onChange={e => setSlot(e.target.value)}>
-                  <option>Morning (7AM-11AM)</option>
-                  <option>Noon (11AM-2PM)</option>
-                  <option>Afternoon (2PM-6PM)</option>
-                  <option>Evening (6PM-9PM)</option>
-                </select>
+                <span>Specific time</span>
+                <input 
+                    type="time" 
+                    value={deliveryTime} 
+                    onChange={e => setDeliveryTime(e.target.value)}
+                    style={{ padding: '10px', border: '1px solid #ddd', borderRadius: '6px', width: '100%' }}
+                    required
+                />
               </div>
-
-              <ul className="co__note">
-                <li>Note: Delivery time may vary by 1 hour.</li>
-                <li>No deliveries after 7:30 PM.</li>
-                <li>For urgent orders, please contact our hotline.</li>
-              </ul>
             </section>
 
-            {/* Submit */}
-            <button className="co__submit" type="submit" disabled={!valid()}>
-              Place Order
-            </button>
-
-            <div className="co__back">
-              <Link to="/cart">← Back to cart</Link>
-            </div>
+            <button className="co__submit" type="submit">Place Order</button>
+            <div className="co__back"><Link to="/cart">← Back to cart</Link></div>
           </form>
 
-          {/* RIGHT */}
+          {/* RIGHT SUMMARY */}
           <aside className="co__right">
             <section className="co__card">
-              <div className="co__cardTitle">Payment</div>
-
+              <div className="co__cardTitle">Order Summary</div>
               {cart.items.map(it => (
                 <div key={it.id} className="co__item">
                   <div className="co__itemInfo">
                     <img src={it.image} alt="" />
                     <div>
                       <div className="co__itemName">{it.name}</div>
-                      <div className="co__itemSku">Quantity: {it.qty}</div>
+                      <div className="co__itemSku">Qty: {it.qty}</div>
                     </div>
                   </div>
                   <div className="co__itemSum">{formatVND(it.price * it.qty)}</div>
                 </div>
               ))}
-
               <div className="co__hr" />
-
               <div className="co__line"><span>Subtotal:</span><span>{formatVND(subtotal)}</span></div>
-              {discount > 0 && <div className="co__line"><span>Discount</span><span>-{formatVND(discount)}</span></div>}
-              {voucherDiscount > 0 && <div className="co__line"><span>Voucher</span><span>-{formatVND(voucherDiscount)}</span></div>}
-              <div className="co__line"><span>Estimated shipping fee:</span><span>{freeShip ? "0₫" : formatVND(shipFee)}</span></div>
-
-              <div className="co__grand">
-                <span>Total:</span>
-                <strong>{formatVND(total)}</strong>
-              </div>
-
-              {/* Voucher */}
+              {/* Ship fee luôn là 0 hoặc Free */}
+              <div className="co__line"><span>Shipping fee:</span><span>Free</span></div>
+              <div className="co__grand"><span>Total:</span><strong>{formatVND(total)}</strong></div>
+              
               <div className="co__voucher">
-                <input
-                  placeholder="Voucher code (e.g: BA25, FREESHIP)"
-                  value={voucher}
-                  onChange={e => setVoucher(e.target.value)}
-                />
+                <input placeholder="Voucher code (BA25)" value={voucher} onChange={e => setVoucher(e.target.value)} />
                 <button onClick={applyVoucher} type="button">Apply</button>
               </div>
               {voucherMsg && <div className="co__voucherMsg">{voucherMsg}</div>}
             </section>
 
-            {/* Shipping policy */}
-            <section className="co__card">
-              <div className="co__cardTitle">Shipping fee</div>
-              <ol className="co__policy">
-                <li>Inner Hanoi: flat rate 15,000₫.</li>
-                <li>FREESHIP with a valid promo code.</li>
-                <li>Delivery hours: 7:00 AM – 9:00 PM daily.</li>
-              </ol>
-            </section>
-
-            {/* Payment method */}
             <section className="co__card">
               <div className="co__cardTitle">Payment Method</div>
               <label className="co__radio">
-                <input type="radio" name="pm" checked={payment==="bank"} onChange={() => setPayment("bank")} />
-                <span>Bank transfer</span>
+                <input type="radio" name="payment" value="bank" checked={payment === "bank"} onChange={e => setPayment(e.target.value)} />
+                <span><strong>Bank Transfer</strong><p style={{margin:0, fontSize:13, color:'#666'}}>Scan QR code</p></span>
               </label>
               <label className="co__radio">
-                <input type="radio" name="pm" checked={payment==="cod"} onChange={() => setPayment("cod")} />
-                <span>Cash on Delivery (COD)</span>
+                <input type="radio" name="payment" value="cod" checked={payment === "cod"} onChange={e => setPayment(e.target.value)} />
+                <span><strong>Cash on Delivery</strong><p style={{margin:0, fontSize:13, color:'#666'}}>Pay upon receipt</p></span>
               </label>
             </section>
           </aside>
         </div>
-        </div>
-      </main>
-      <Footer />
+      </div>
 
-      {/* QR Code Popup for Bank Transfer */}
       {showQRPopup && (
         <div className="co__qrOverlay" onClick={handleQRCancel}>
-          <div className="co__qrPopup" onClick={(e) => e.stopPropagation()}>
+          <div className="co__qrModal" onClick={e => e.stopPropagation()}>
             <button className="co__qrClose" onClick={handleQRCancel}>×</button>
-            <h2 className="co__qrTitle">Scan QR Code to Pay</h2>
-            <p className="co__qrSubtitle">Total amount: {formatVND(total)}</p>
-            
-            <div className="co__qrCode">
-              {/* Mock QR Code - using a simple pattern */}
-              <div className="co__qrPattern">
-                <div className="co__qrSquare co__qrSquare--tl"></div>
-                <div className="co__qrSquare co__qrSquare--tr"></div>
-                <div className="co__qrSquare co__qrSquare--bl"></div>
-                <div className="co__qrGrid">
-                  {Array.from({ length: 25 }).map((_, i) => (
-                    <div 
-                      key={i} 
-                      className="co__qrDot"
-                      style={{
-                        backgroundColor: Math.random() > 0.5 ? '#000' : '#fff'
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
+            <h2 className="co__qrTitle">Scan QR Code</h2>
+            <p className="co__qrSubtitle">Total: {formatVND(total)}</p>
+            <div className="co__qrCode"><div className="co__qrPattern"></div></div>
             <div className="co__qrActions">
-              <button className="co__qrBtn co__qrBtn--cancel" onClick={handleQRCancel}>
-                Cancel
-              </button>
-              <button className="co__qrBtn co__qrBtn--confirm" onClick={handleQRConfirm}>
-                I have paid
-              </button>
+              <button className="co__qrBtn co__qrBtn--cancel" onClick={handleQRCancel}>Cancel</button>
+              <button className="co__qrBtn co__qrBtn--confirm" onClick={handleQRConfirm}>I have paid</button>
             </div>
           </div>
         </div>
       )}
+    </main>
+    <Footer />
     </>
   );
 }

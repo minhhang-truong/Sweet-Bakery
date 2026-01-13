@@ -3,10 +3,12 @@ const pool = require('../config/pool');
 class Product {
     static async getAllProducts() {
         try {
+            // Sửa: JOIN app.product và app.category
             const query = `SELECT c.name AS cat_name, c.slug, p.id, p.name, p.images, p.price FROM category c
             JOIN product p ON c.id = p.category_id ORDER BY c.name`;
             const cat =  await pool.query(query);
             let res = [];
+            // ... (Logic xử lý vòng lặp giữ nguyên vì cấu trúc JSON trả về không đổi)
             for(let i = 0; i < cat.rows.length; i++){
                 if(i == 0 || cat.rows[i].cat_name != cat.rows[i-1].cat_name){
                     let currCat = {
@@ -68,7 +70,8 @@ class Product {
             if(cat_id.rows.length === 0 ) {
                 cat_id = await pool.query(`INSERT INTO category (name, slug) VALUES ($1, $2) RETURNING id`, [data.category, data.slug]); 
             }
-            const query = `INSERT INTO product (name, category_id, price, provide_id, images, id, stock, description, status) VALUES
+            // Sửa: provide_id -> provider_id
+            const query = `INSERT INTO product (name, category_id, price, provider_id, images, id, stock, description, status) VALUES
             ($1, $2, $3, $4, $5, $6, $7, $8, $9);`;
             const values = [data.productName, cat_id.rows[0].id, data.price, 1, data.image, data.sku, data.count, data.description, data.status];
             await pool.query(query, values);
@@ -83,9 +86,12 @@ class Product {
             const category = await pool.query(`SELECT category_id FROM product WHERE id = $1`, [id]);
             const query = `DELETE FROM product WHERE id = $1`;
             await pool.query(query, [id]);
-            const items = await pool.query(`SELECT COUNT(name) FROM product WHERE category_id = $1`, [category.rows[0].category_id]);
-            if(Number(items.rows[0].count) == 0){
-                await pool.query(`DELETE FROM category WHERE id = $1`, [category.rows[0].category_id]);
+            
+            if(category.rows.length > 0) {
+                 const items = await pool.query(`SELECT COUNT(name) FROM product WHERE category_id = $1`, [category.rows[0].category_id]);
+                 if(Number(items.rows[0].count) == 0){
+                     await pool.query(`DELETE FROM category WHERE id = $1`, [category.rows[0].category_id]);
+                 }
             }
         } catch (error) {
             console.error(error);

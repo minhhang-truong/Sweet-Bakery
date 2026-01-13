@@ -2,7 +2,7 @@ import "./Account.css";
 import { useAuth } from "../../../context/AuthContext";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { BiLockAlt, BiSave, BiUser } from "react-icons/bi";
+import { BiLockAlt, BiSave } from "react-icons/bi";
 import { message } from "antd";
 
 import { toISODate } from "../../../lib/formDate";
@@ -14,7 +14,7 @@ import ManagerSidebar from "../../../components/admin/ManagerSidebar";
 import ImageUploadZone from "../../../components/admin/ImageUploadZone";
 
 export default function Account() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser } = useAuth(); // updateUser là hàm update context
   const nav = useNavigate();
 
   const [form, setForm] = useState({
@@ -37,10 +37,10 @@ export default function Account() {
     const fetchProfile = async () => {
       try {
         const res = await api.get(`/manager/auth/profile/${user.id}`);
-
+        // Backend trả về: fullname, email, phone, address, dob, avatar, department
         setForm({
-          fullname: res.data.fullname,
-          email: res.data.email,
+          fullname: res.data.fullname || "",
+          email: res.data.email || "",
           phone: res.data.phone || "",
           address: res.data.address || "",
           dob: res.data.dob ? toISODate(res.data.dob) : "",
@@ -48,6 +48,7 @@ export default function Account() {
           department: res.data.department || "",
         });
       } catch (err) {
+        console.error("Failed to load profile", err);
         message.error("Failed to load profile");
       }
     };
@@ -55,96 +56,74 @@ export default function Account() {
     fetchProfile();
   }, [user]);
 
-  /* ================= FORM CHANGE ================= */
+  /* ================= HANDLE CHANGE ================= */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  /* ================= SAVE PROFILE ================= */
+  /* ================= HANDLE SAVE ================= */
   const handleSave = async () => {
     try {
       setLoading(true);
-
+      
+      // SỬA QUAN TRỌNG: Map 'fullname' thành 'name' để khớp với Backend Model
       const payload = {
-        fullname: form.fullname,
-        email: form.email,
-        phone: form.phone,
-        address: form.address,
-        dob: form.dob,
-        department: form.department,
-        avatar: form.avatar,
+          ...form,
+          name: form.fullname, // Backend cần field 'name' để tách first/last
       };
 
       const res = await api.put(`/manager/auth/profile/${user.id}`, payload);
 
-      setForm((prev) => ({
-        ...prev,
-        ...res.data,
-        dob: res.data.dob ? toISODate(res.data.dob) : "",
-      }));
-
-      updateUser({
-        fullname: res.data.fullname,
-        email: res.data.email,
-        name: res.data.fullname.split(" ")[0],
-      });
-
       message.success("Profile updated successfully");
+      
+      // Cập nhật lại Context/LocalStorage nếu cần
+      if (updateUser) {
+          updateUser({ ...user, fullname: form.fullname, avatar: form.avatar });
+      }
+      
     } catch (err) {
+      console.error("Update failed", err);
       message.error("Failed to update profile");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ================= AVATAR UPLOADED ================= */
-  const handleAvatarUploaded = async (url) => {
-    setForm((prev) => ({ ...prev, avatar: url }));
-  };
-
   return (
     <>
-      <ManagerSidebar
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-      />
-
-      {/* HEADER */}
+      <ManagerSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="sticky top-0 z-30">
-        <Header onMenuClick={() => setSidebarOpen(true)} />
+          <Header onMenuClick={() => setSidebarOpen(true)} />
       </div>
 
       <main className="emp-profile">
-        <h1 className="emp-profile__title">Manager Profile</h1>
-
+        <h1 className="emp-profile__title">My Profile</h1>
+        
         <div className="emp-profile__card">
-          {/* ================= HEADER ================= */}
           <div className="emp-profile__header">
-            {/* AVATAR */}
-            <div className="emp-profile__avatar">
-              <ImageUploadZone
-                image={form.avatar}
-                uploadEndpoint={`/manager/upload/avatar`}
-                onImageUploaded={handleAvatarUploaded}
-                className="w-[180px] h-[180px]"
-              />
-            </div>
-
-            {/* BASIC INFO */}
-            <div className="emp-profile__basic">
-              <h2>{form.fullname}</h2>
-              <p className="emp-profile__role">Manager</p>
-              <p className="emp-profile__status active">
-                Status: Active
-              </p>
-            </div>
+             {/* Component Upload Ảnh (Giữ nguyên) */}
+             <div className="emp-profile__avatar">
+                <ImageUploadZone 
+                    image={form.avatar}
+                    onImageUploaded={(file) => {
+                        // file ở đây có thể là URL hoặc File Object tùy component ImageUploadZone trả về
+                        // Giả sử trả về URL hoặc xử lý upload ngay tại component đó
+                        // Ở đây ta tạm set vào form để hiển thị
+                         if(typeof file === 'string') setForm(prev => ({...prev, avatar: file}));
+                    }}
+                    uploadEndpoint="/manager/upload/avatar" // Endpoint upload
+                />
+             </div>
+             <div>
+                 <h2 className="text-xl font-bold">{form.fullname}</h2>
+                 <p className="emp-profile__role">Administrator</p>
+             </div>
           </div>
 
-          {/* ================= FORM ================= */}
-          <div className="emp-profile__form">
+          <div className="emp-profile__info">
             <label>
-              <span>Full name</span>
+              <span>Full Name</span>
               <input
                 name="fullname"
                 value={form.fullname}
@@ -157,7 +136,8 @@ export default function Account() {
               <input
                 name="email"
                 value={form.email}
-                onChange={handleChange}
+                disabled // Thường không cho sửa email đăng nhập
+                className="bg-gray-100 cursor-not-allowed"
               />
             </label>
 
@@ -194,8 +174,8 @@ export default function Account() {
               <input
                 name="department"
                 disabled
-                value={form.department}
-                onChange={handleChange}
+                value={form.department || "Management"}
+                className="bg-gray-100 cursor-not-allowed"
               />
             </label>
           </div>

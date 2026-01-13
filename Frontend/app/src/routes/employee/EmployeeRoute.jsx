@@ -4,15 +4,15 @@ import { useAuth } from "../../context/AuthContext";
 export default function EmployeeRoute({ children }) {
   const auth = useAuth();
 
-  // Chưa đăng nhập → vẫn cho vào (guest)
+  // Chưa đăng nhập -> đá về trang login nhân viên
   if (!auth.isAuthed) return <Navigate to="/employee/signin" replace />;
 
-  // Nếu là customer → chặn
-  if (auth.user.role === 1) return <Navigate to="/" replace />;
+  // Nếu là khách hàng -> đá về trang chủ
+  if (auth.user.role === 'customer') return <Navigate to="/" replace />;
 
-  // Nếu là manager → chặn
-  if (auth.user.role === 3) return <Navigate to="/manager/dashboard" replace />;
+  // Nếu là admin -> đá về dashboard admin
+  if (auth.user.role === 'admin') return <Navigate to="/manager/dashboard" replace />;
 
-  // Nếu là customer → cho phép
+  // Nếu là staff -> cho phép
   return <>{children}</>;
 }

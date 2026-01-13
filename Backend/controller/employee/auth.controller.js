@@ -5,19 +5,22 @@ const jwt = require('jsonwebtoken');
 module.exports.signin = async (req, res) => {
     try {
         const { email, password } = req.body;
+        // Model đã sửa để join user_account và employee
         const user = await Account.findEmployeeByEmail(email);
 
         if (!user){
             return res.status(404).json({ error: 'User not found' });
         }
 
-        if (user.role !== 2) {
+        // SỬA: Role cũ là số 2, role mới là string 'staff'
+        if (user.role !== 'staff') {
             return res.status(403).json({ error: 'You do not have permission to login here' });
         }
 
         const match = await bcrypt.compare(password, user.password);
         if (!match) return res.status(401).json({ error: 'Invalid password' });
 
+        // Token
         const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, process.env.JWT_SECRET, {
         expiresIn: '3h',
         });
@@ -52,14 +55,17 @@ module.exports.logout = async (req, res) => {
 module.exports.updateProfile = async (req, res) => {
     try {
         const userId = parseInt(req.params.id);
+        // Bảo mật
         if (req.user.id !== userId) {
             return res.status(403).json({ error: 'You do not have permission to update this profile' });
         }
+        
+        // Model updateEmployee đã xử lý việc update vào 2 bảng user_account & employee
         const result = await Account.updateEmployee(req.body, userId);
         if (!result) {
             return res.status(404).json({ error: "User not found" });
         }
-        res.json({message: 'Update successfully!'});
+        res.json({message: 'Update successfully!', user: result});
     } catch (err) {
         console.error("Update failed:", err);
         res.status(500).json({ error: "Server error" });
@@ -72,6 +78,7 @@ module.exports.userProfile = async (req, res) => {
         if (req.user.id !== userId) {
             return res.status(403).json({ error: 'You do not have permission to update this profile' });
         }
+        
         const result = await Account.findEmployeeById(userId);
         if (!result) {
             return res.status(404).json({ error: "User not found" });
@@ -87,12 +94,13 @@ module.exports.userProfile = async (req, res) => {
 module.exports.changePassword = async (req, res) => {
   const userId = parseInt(req.params.id);
   const {currentPassword, newPassword} = req.body;
-  if (req.user.id != userId) {
+  
+  if (req.user.id !== userId) {
     return res.status(403).json({ error: "You can only change your own password" });
   }
 
   const result = await Account.getPassword(userId);
-  if (result.rowCount === 0) {
+  if (!result) {
       return res.status(404).json({ error: "User not found" });
   }
 

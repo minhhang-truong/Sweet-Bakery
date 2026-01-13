@@ -4,6 +4,8 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import axios from "axios";
 import logoImg from '../../../assets/images/common/logo-sweet-bakery.png';
+import { message } from "antd"; // Thêm message để báo lỗi đẹp hơn
+
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export default function SignIn() {
@@ -21,35 +23,45 @@ export default function SignIn() {
     e.preventDefault();
     setErr("");
 
-    // ✅ mock validate đơn giản
     if (!email.trim() || !pw.trim()) {
       setErr("Please enter email and password");
       return;
     }
-    // TODO: gọi API thật ở đây
-    console.log(API_URL)
+
     try {
+      // Gọi API Signin của Admin
       const res = await axios.post(`${API_URL}/manager/auth/signin`, {
         email: email,
         password: pw,
       }, {withCredentials: true});
 
       console.log("Login success:", res.data);
-      // localStorage.setItem("token", res.data.token); // Save JWT token
-      await auth.login(res.data.user);
-      if (redirect) {
-        navigate(`/${redirect}`);
-        return;
+      
+      const user = res.data.user;
+
+      // KIỂM TRA ROLE (Sửa: check string 'admin')
+      if (user.role !== 'admin' && user.role !== 'manager') { // Đề phòng bạn dùng cả 2
+          setErr("Unauthorized: You do not have permission to access Admin page.");
+          return;
       }
-      if (res.data.user.role == 2) navigate("/employee", {replace: true});
-      else if (res.data.user.role == 3) navigate("/manager/dashboard");
-      else navigate("/", { replace: true });
-    } catch (err) {
-      if (err.response) {
-        // Response came from backend with an error message
-        setErr(err.response.data.error || "Login failed");
+
+      // Lưu Token và User vào AuthContext/LocalStorage
+      // Giả sử auth.login xử lý việc lưu localStorage
+      // Nếu auth.login chưa có, ta lưu thủ công ở đây:
+      localStorage.setItem("auth:token", document.cookie); // Hoặc lấy từ res nếu BE trả token trong body
+      localStorage.setItem("auth:user:v1", JSON.stringify(user));
+      
+      // Update Context (nếu có hàm này)
+      if(auth.login) auth.login(user);
+
+      message.success("Login successful!");
+      navigate("/manager/dashboard"); 
+
+    } catch (error) {
+      console.error(error);
+      if (error.response) {
+        setErr(error.response.data.error || "Login failed");
       } else {
-        // Network or unexpected error
         setErr("Unable to connect to server");
       }
     }
@@ -59,7 +71,7 @@ export default function SignIn() {
     <main className="signin">
       <div className="signin__card">
         <img className="signin__logo" src={logoImg} alt="Sweet Bakery" />
-        <h1 className="signin__title">Sign in</h1>
+        <h1 className="signin__title">Admin Sign in</h1>
 
         <form onSubmit={onSubmit} className="signin__form">
           {/* Email */}
@@ -84,16 +96,24 @@ export default function SignIn() {
               onChange={(e) => setPw(e.target.value)}
               required
             />
+            <button
+              type="button"
+              className="field__icon"
+              onClick={() => setShow(!show)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+              {show ? '👁️' : '🙈'}
+            </button>
           </label>
 
-          {err && <div className="signin__error">{err}</div>}
+          {err && <div className="signin__error" style={{color: 'red', fontSize: '14px'}}>{err}</div>}
 
           <button type="submit" className="signin__btn">Sign in</button>
         </form>
-
-        <p className="signin__hint">
-          Don’t have an account? <Link to="/signup">Sign up</Link>
-        </p>
+        
+        <div style={{marginTop: 20, fontSize: 13, color: '#666'}}>
+            Are you an employee? <Link to="/employee/signin" style={{color: '#d31111', fontWeight: 'bold'}}>Login here</Link>
+        </div>
       </div>
     </main>
   );

@@ -6,6 +6,7 @@ const { authorize } = require("../../middleware/authorize.middleware");
 
 const router = express.Router();
 
-router.post("/avatar", verifyToken, authorize(2), upload.single("avatar"), controller.uploadAvatar);
+// SỬA: authorize(2) -> authorize('staff')
+router.post("/avatar", verifyToken, authorize('staff'), upload.single("avatar"), controller.uploadAvatar);
 
 module.exports = router;

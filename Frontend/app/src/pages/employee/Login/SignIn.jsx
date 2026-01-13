@@ -4,6 +4,8 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import axios from "axios";
 import logoImg from '../../../assets/images/common/logo-sweet-bakery.png';
+import { message } from "antd";
+
 const API_URL = import.meta.env.VITE_BACKEND_URL;
 
 export default function SignIn() {
@@ -21,13 +23,11 @@ export default function SignIn() {
     e.preventDefault();
     setErr("");
 
-    // ✅ mock validate đơn giản
     if (!email.trim() || !pw.trim()) {
       setErr("Please enter email and password");
       return;
     }
-    // TODO: gọi API thật ở đây
-    console.log(API_URL)
+
     try {
       const res = await axios.post(`${API_URL}/employee/auth/signin`, {
         email: email,
@@ -35,21 +35,27 @@ export default function SignIn() {
       }, {withCredentials: true});
 
       console.log("Login success:", res.data);
-      // localStorage.setItem("token", res.data.token); // Save JWT token
-      await auth.login(res.data.user);
-      if (redirect) {
-        navigate(`/${redirect}`);
-        return;
+      const user = res.data.user;
+
+      // SỬA: Check role là string 'staff'
+      if (user.role !== 'staff') {
+          setErr("Unauthorized: Only employees can login here.");
+          return;
       }
-      if (res.data.user.role == 2) navigate("/employee", {replace: true});
-      else if (res.data.user.role == 3) navigate("/manager/dashboard");
-      else navigate("/", { replace: true });
-    } catch (err) {
-      if (err.response) {
-        // Response came from backend with an error message
-        setErr(err.response.data.error || "Login failed");
+
+      // Lưu user vào localStorage
+      localStorage.setItem("auth:user:v1", JSON.stringify(user));
+      
+      if(auth.login) auth.login(user);
+
+      message.success("Login successful");
+      navigate("/employee");
+
+    } catch (error) {
+      console.error(error);
+      if (error.response) {
+        setErr(error.response.data.error || "Login failed");
       } else {
-        // Network or unexpected error
         setErr("Unable to connect to server");
       }
     }
@@ -59,10 +65,9 @@ export default function SignIn() {
     <main className="signin">
       <div className="signin__card">
         <img className="signin__logo" src={logoImg} alt="Sweet Bakery" />
-        <h1 className="signin__title">Sign in</h1>
+        <h1 className="signin__title">Employee Portal</h1>
 
         <form onSubmit={onSubmit} className="signin__form">
-          {/* Email */}
           <label className="field">
             <span className="field__icon" aria-hidden>👤</span>
             <input
@@ -74,7 +79,6 @@ export default function SignIn() {
             />
           </label>
 
-          {/* Password */}
           <label className="field">
             <span className="field__icon" aria-hidden>🔒</span>
             <input
@@ -84,16 +88,19 @@ export default function SignIn() {
               onChange={(e) => setPw(e.target.value)}
               required
             />
+            <button type="button" className="field__icon" onClick={() => setShow(!show)} style={{border:'none', background:'none'}}>
+                {show ? '👁️' : '🙈'}
+            </button>
           </label>
 
           {err && <div className="signin__error">{err}</div>}
 
           <button type="submit" className="signin__btn">Sign in</button>
         </form>
-
-        <p className="signin__hint">
-          Don’t have an account? <Link to="/signup">Sign up</Link>
-        </p>
+        
+        <div style={{marginTop: 15, fontSize: 13, color: '#666'}}>
+            Are you a Manager? <Link to="/manager/signin" style={{color: '#d31111', fontWeight: 'bold'}}>Login here</Link>
+        </div>
       </div>
     </main>
   );

@@ -6,13 +6,10 @@ import { formatVND } from "../../../lib/money.js";
 import { useEffect, useState } from "react";
 import api from "../../../lib/axiosCustomer.js";
 
-const API_URL = import.meta.env.VITE_BACKEND_URL;
-
 export default function HistoryPage() {
   const auth = useAuth();
   const [orders, setOrders] = useState([]);
 
-  // Move fetch function OUTSIDE useEffect
   async function fetchOrderHistory() {
     try {
       const res = await api.get(
@@ -24,12 +21,17 @@ export default function HistoryPage() {
     }
   }
 
-  // Load when user is authenticated
   useEffect(() => {
     if (auth.isAuthed) {
       fetchOrderHistory();
     }
   }, [auth.isAuthed]);
+
+  // Hàm helper format ngày giờ
+  const formatDate = (isoStr) => {
+      if(!isoStr) return "";
+      return new Date(isoStr).toLocaleString('vi-VN');
+  }
 
   return (
     <>
@@ -48,32 +50,31 @@ export default function HistoryPage() {
             <>
               <header className="historyHeader">
                 <p className="historyEyebrow">Order history</p>
-                <h1>Sweet moments for {auth.user.fullname}</h1>
+                <h1>Sweet moments for {auth.user.fullname || auth.user.name}</h1>
                 <p className="historySub">
-                  Showing {orders.length} order
-                  {orders.length !== 1 ? "s" : ""} placed with{" "}
-                  <strong>{auth.user.email}</strong>
+                  Showing {orders.length} order{orders.length !== 1 ? "s" : ""} placed
                 </p>
               </header>
 
               <div className="historyTimeline">
                 {orders.map((order) => (
-                  <article key={order.id} className="historyCard">
+                  <article key={order.order_id} className="historyCard">
                     <div className="historyMeta">
                       <div>
                         <p className="historyLabel">Order ID</p>
-                        <h2>{order.id}</h2>
+                        {/* SỬA: order.id -> order.order_id */}
+                        <h2>{order.order_id}</h2>
                       </div>
                       <div>
                         <p className="historyLabel">Date</p>
-                        <strong>{new Date(order.orderdate).toLocaleDateString()}</strong>
+                        {/* SỬA: order.orderdate -> order.order_time */}
+                        <strong>{formatDate(order.order_time)}</strong>
                       </div>
                       <div>
                         <p className="historyLabel">Status</p>
                         <span className={`historyStatus is-${(order.status || "").toLowerCase()}`}>
                           {order.status || "Unknown"}
                         </span>
-
                       </div>
                       <div>
                         <p className="historyLabel">Total</p>
@@ -82,14 +83,19 @@ export default function HistoryPage() {
                     </div>
 
                     <div className="historyItems">
-                      {order.items.map((item, index) => (
-                        <div key={`${order.id}-${index}`} className="historyItem">
-                          <p className="historyItemName">{item.name}</p>
-                          <p className="historyItemMeta">
-                            Qty {item.qty} · {formatVND(item.price)}
-                          </p>
-                        </div>
-                      ))}
+                      {/* Thêm check order.items tồn tại vì LEFT JOIN có thể trả về null */}
+                      {order.items && order.items.length > 0 ? (
+                          order.items.map((item, index) => (
+                            <div key={`${order.order_id}-${index}`} className="historyItem">
+                              <p className="historyItemName">{item.name || "Product Name"}</p>
+                              <p className="historyItemMeta">
+                                Qty {item.qty} · {formatVND(item.price)}
+                              </p>
+                            </div>
+                          ))
+                      ) : (
+                          <p style={{fontStyle: 'italic', color: '#999'}}>No detail items found</p>
+                      )}
                     </div>
                   </article>
                 ))}

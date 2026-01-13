@@ -5,10 +5,11 @@ const controller = require("../../controller/clients/order.controller");
 const verifyToken = require('../../middleware/auth.middleware');
 const { authorize } = require('../../middleware/authorize.middleware');
 
-router.post("/", verifyToken, authorize(1), controller.saveOrder);
+// SỬA: authorize(1) -> authorize('customer')
+router.post("/", verifyToken, authorize('customer'), controller.saveOrder);
 
-router.get("/history/:id", verifyToken, authorize(1), controller.orderHistory);
+router.get("/history/:id", verifyToken, authorize('customer'), controller.orderHistory);
 
-router.get("/track/:id", verifyToken, authorize(1), controller.trackOrder);
+router.get("/track/:id", verifyToken, authorize('customer'), controller.trackOrder);
 
 module.exports = router;

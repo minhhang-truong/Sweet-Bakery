@@ -1,110 +1,80 @@
-import "./ChangePassWord.css"; // Both here
+import "./ChangePassWord.css";
 import { useState } from "react";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import { useNavigate } from "react-router-dom";
+import { message } from "antd";
+
 import Header from '../../../components/admin/ManagerHeader.jsx';
 import Footer from '../../../components/admin/ManagerFooter.jsx';
 import ManagerSidebar from "../../../components/admin/ManagerSidebar.jsx";
 import api from '../../../lib/axiosAdmin.js';
-import { message } from "antd";
 
 export default function ChangePassword() {
-  const auth = useAuth();
+  const { user } = useAuth();
   const nav = useNavigate();
+  
   const [form, setForm] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Redirect if not authenticated
-  if (!auth.isAuthed) {
-    return (
-      <>
-        <ManagerSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-        {/* Header (Sticky Top) */}
-        <div className="sticky top-0 z-30">
-          <Header onMenuClick={() => setSidebarOpen(true)} />
-        </div>
-
-        <main className="change-password change-password--empty">
-          <div className="container">
-            <h1>Redirecting…</h1>
-            <p>We are taking you to the sign-in page.</p>
-          </div>
-        </main>
-        <Footer />
-      </>
-    );
+  // Nếu chưa đăng nhập thì không render nội dung (hoặc chuyển hướng)
+  if (!user) {
+     return <div className="p-10 text-center">Loading...</div>;
   }
 
-  async function handleSubmit(e) {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess(false);
-    setLoading(true);
 
-    // Validation
-    if (!form.currentPassword || !form.newPassword || !form.confirmPassword) {
-      setError("Please fill in all fields");
-      setLoading(false);
-      return;
-    }
-
+    // 1. Validate Client
     if (form.newPassword.length < 6) {
-      setError("New password must be at least 6 characters");
-      setLoading(false);
+      message.error("Password must be at least 6 characters");
       return;
     }
 
     if (form.newPassword !== form.confirmPassword) {
-      setError("New password and confirm password do not match");
-      setLoading(false);
-      return;
-    }
-
-    if (form.currentPassword === form.newPassword) {
-      setError("New password must be different from current password");
-      setLoading(false);
+      message.error("New password and confirmation do not match");
       return;
     }
 
     try {
-      await api.put(
-        `/manager/auth/change-password/${auth.user.id}`,
-        {
-          currentPassword: form.currentPassword,
-          newPassword: form.newPassword,
-          confirmPassword: form.confirmPassword,
-        },
-      );
+      setLoading(true);
 
-      setSuccess(true);
+      // 2. Gọi API Backend (Đúng endpoint đã sửa trong Admin Route)
+      // Route: PUT /manager/auth/change-password/:id
+      await api.put(`/manager/auth/change-password/${user.id}`, {
+        currentPassword: form.currentPassword,
+        newPassword: form.newPassword
+      });
+
+      // 3. Thông báo thành công
+      message.success("Password changed successfully!");
+      
+      // Reset form
       setForm({
         currentPassword: "",
         newPassword: "",
         confirmPassword: "",
       });
-      
-      // Auto redirect after 2 seconds
-      message.success("Password changed successfully. Please sign in again.");
-      
-      setTimeout(() => {
-        auth.logout();
-        nav("/manager/signin");
-      }, 2000);
-      
+
     } catch (err) {
-      setError(err.response?.data?.error || "Failed to change password. Please try again.");
+      console.error("Change password error:", err);
+      // Hiển thị lỗi từ Backend trả về (nếu có)
+      const errorMsg = err.response?.data?.error || "Failed to change password";
+      message.error(errorMsg);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   return (
     <>
@@ -120,29 +90,22 @@ export default function ChangePassword() {
           <h1 className="cp__title">Change Password</h1>
 
           <div className="cp__content">
+            {/* Form Section */}
             <section className="cp__card">
-              <h2 className="cp__cardTitle">Update your password</h2>
-              
-              {success && (
-                <div className="cp__success">
-                  Password changed successfully! Redirecting to account page...
-                </div>
-              )}
-
-              {error && (
-                <div className="cp__error">
-                  {error}
-                </div>
-              )}
+              <h2 className="cp__cardTitle">Create new password</h2>
+              <p className="mb-4 text-sm text-gray-500">
+                Your new password must be different from previous used passwords.
+              </p>
 
               <form onSubmit={handleSubmit} className="cp__form">
                 <label>
                   <span>Current password</span>
                   <input
                     type="password"
+                    name="currentPassword"
                     value={form.currentPassword}
-                    onChange={(e) => setForm((f) => ({ ...f, currentPassword: e.target.value }))}
-                    placeholder="Enter your current password"
+                    onChange={handleChange}
+                    placeholder="Enter current password"
                     required
                   />
                 </label>
@@ -151,20 +114,22 @@ export default function ChangePassword() {
                   <span>New password</span>
                   <input
                     type="password"
+                    name="newPassword"
                     value={form.newPassword}
-                    onChange={(e) => setForm((f) => ({ ...f, newPassword: e.target.value }))}
-                    placeholder="Enter new password (min 6 characters)"
+                    onChange={handleChange}
+                    placeholder="At least 6 characters"
                     required
                     minLength={6}
                   />
                 </label>
 
                 <label>
-                  <span>Confirm new password</span>
+                  <span>Confirm password</span>
                   <input
                     type="password"
+                    name="confirmPassword"
                     value={form.confirmPassword}
-                    onChange={(e) => setForm((f) => ({ ...f, confirmPassword: e.target.value }))}
+                    onChange={handleChange}
                     placeholder="Confirm your new password"
                     required
                     minLength={6}
@@ -179,10 +144,11 @@ export default function ChangePassword() {
                   >
                     {loading ? "Changing..." : "Change password"}
                   </button>
+                  
                   <button
                     type="button"
                     className="cp__btn cp__btn--secondary"
-                    onClick={() => nav("/manager/profile")}
+                    onClick={() => nav("/manager/dashboard")} // Quay về dashboard hoặc profile
                   >
                     Cancel
                   </button>
@@ -190,6 +156,7 @@ export default function ChangePassword() {
               </form>
             </section>
 
+            {/* Sidebar Info Section */}
             <aside className="cp__side">
               <section className="cp__card">
                 <h2 className="cp__cardTitle">Password requirements</h2>
@@ -203,6 +170,7 @@ export default function ChangePassword() {
           </div>
         </div>
       </main>
+      
       <Footer />
     </>
   );
