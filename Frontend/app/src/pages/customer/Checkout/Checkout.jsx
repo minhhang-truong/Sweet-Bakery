@@ -211,7 +211,7 @@ export default function Checkout() {
                 <input value={ward} onChange={e => setWard(e.target.value)} placeholder="Ex: Bach Khoa" required />
               </div>
               <label className="co__row co__row--full">
-                <span>Detailed address</span>
+                <span>Street</span>
                 <input value={street} onChange={e => setStreet(e.target.value)} placeholder="Ex: No 1 Dai Co Viet" required />
               </label>
             </section>

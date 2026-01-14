@@ -27,44 +27,47 @@ class Order {
             const district = data.district || "";
             const city = data.city || "";
 
+            // 3. INSERT VÀO BẢNG ORDERS
+            // QUAN TRỌNG: total_amount để là 0. Trigger DB sẽ tự tính sau bước 4.
             const queryOrder = `
                 INSERT INTO app.orders 
                 (order_id, customer_id, total_amount, order_time, status, 
                  receive_time, payment, note, 
                  receiver_name, receiver_phone, 
                  receiver_street, receiver_ward, receiver_district, receiver_city)
-                VALUES ($1, $2, $3, NOW(), $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                VALUES ($1, $2, 0, NOW(), $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             `;
 
             const valuesOrder = [
-                data.id, data.cus_id, data.prices.total, status, receiveTimestamp, payment,
-                data.customer.note || "", data.receiver.name, data.receiver.phone,
-                street, ward, district, city
+                data.id, 
+                data.cus_id, 
+                // Bỏ data.prices.total, thay bằng 0 ở query trên
+                status,                     // $3
+                receiveTimestamp,           // $4
+                payment,                    // $5
+                data.customer.note || "",   // $6
+                data.receiver.name,         // $7
+                data.receiver.phone,        // $8
+                street,                     // $9
+                ward,                       // $10
+                district,                   // $11
+                city                        // $12
             ];
 
             await client.query(queryOrder, valuesOrder);
 
-            /*const queryDetail = `
-                INSERT INTO order_line (order_id, product_id, quantity, price)
-                VALUES ($1, $2, $3, $4)
-            `;
-
-            for (let item of data.items) {
-                await client.query(queryDetail, [data.id, item.id, item.qty, item.price]);
-            }*/
-
-            // 4. INSERT VÀO BẢNG ORDER_LINE (ĐÃ SỬA: INSERT 1 LẦN DUY NHẤT)
+            // 4. INSERT VÀO BẢNG ORDER_LINE (BATCH INSERT)
+            // KHI LỆNH NÀY CHẠY:
+            // -> Trigger 2 sẽ chạy kiểm tra kho. Nếu thiếu -> Báo lỗi -> Nhảy xuống catch -> ROLLBACK.
+            // -> Nếu đủ kho -> Insert thành công -> Trigger 1 chạy -> Update lại total_amount cho bảng orders.
             if (data.items && data.items.length > 0) {
                 const lineValues = [];
                 const placeholders = [];
                 
                 data.items.forEach((item, index) => {
-                    const i = index * 4; // Mỗi dòng có 4 tham số (order_id, product_id, quantity, price)
-                    
-                    // Tạo chuỗi placeholders: ($1, $2, $3, $4), ($5, $6, $7, $8)...
+                    const i = index * 4; 
                     placeholders.push(`($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4})`);
                     
-                    // Đẩy dữ liệu phẳng vào mảng values
                     lineValues.push(
                         data.id,    // order_id
                         item.id,    // product_id
@@ -73,14 +76,11 @@ class Order {
                     );
                 });
 
-                // Câu lệnh SQL cuối cùng sẽ có dạng: 
-                // INSERT INTO ... VALUES ($1, $2, $3, $4), ($5, $6, $7, $8) ...
                 const queryDetail = `
                     INSERT INTO app.order_line (order_id, product_id, quantity, price)
                     VALUES ${placeholders.join(', ')}
                 `;
 
-                // Thực thi 1 lần duy nhất
                 await client.query(queryDetail, lineValues);
             }
 
@@ -89,8 +89,9 @@ class Order {
 
         } catch (error) {
             await client.query('ROLLBACK');
-            console.error("Error creating order:", error);
-            throw error;
+            // Log lỗi cụ thể ra console (VD: Sản phẩm ... không đủ hàng tồn kho)
+            console.error("Error creating order:", error.message);
+            throw error; // Ném lỗi ra để Controller trả về Frontend
         } finally {
             client.release();
         }
