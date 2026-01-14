@@ -37,45 +37,16 @@ class Revenue {
 
     static async getWeeklyRevenue(startOfWeek, date) {
         try {
-            const query = `
-                WITH date_series AS (
-                    SELECT generate_series($1::date, $2::date, '1 day'::interval)::DATE AS day
-                ),
-                daily_orders AS (
-                    SELECT 
-                        order_time::DATE as day, 
-                        COUNT(order_id) as total_orders,
-                        SUM(total_amount) as total_revenue
-                    FROM app.orders
-                    WHERE status = 'completed' AND order_time::DATE BETWEEN $1 AND $2
-                    GROUP BY order_time::DATE
-                ),
-                daily_items AS (
-                    SELECT 
-                        o.order_time::DATE as day,
-                        SUM(ol.quantity) as items_sold
-                    FROM app.orders o
-                    JOIN app.order_line ol ON o.order_id = ol.order_id
-                    WHERE o.status = 'completed' AND o.order_time::DATE BETWEEN $1 AND $2
-                    GROUP BY o.order_time::DATE
-                )
-                -- SỬA Ở ĐÂY: Đổi alias 'do' thành 'd_orders' để tránh trùng từ khóa
-                SELECT 
-                    ds.day, 
-                    COALESCE(d_orders.total_revenue, 0) AS revenue,
-                    COALESCE(d_orders.total_orders, 0) AS orders,
-                    COALESCE(d_items.items_sold, 0) AS items
-                FROM date_series ds
-                LEFT JOIN daily_orders d_orders ON ds.day = d_orders.day
-                LEFT JOIN daily_items d_items ON ds.day = d_items.day
-                ORDER BY ds.day
-            `;
+            // Chỉ cần gọi Function đã tạo trong DB
+            const query = `SELECT * FROM app.get_weekly_revenue($1, $2)`;
             
+            // Tham số truyền vào vẫn là ngày bắt đầu và kết thúc
             const values = [startOfWeek, date]; 
+            
             const res = await pool.query(query, values);
             return res.rows;
         } catch (error) {
-            console.error(error);
+            console.error("Error calling DB function:", error);
             throw error;
         }
     }
