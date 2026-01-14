@@ -21,11 +21,11 @@ class Order {
 
             const payment = (data.payment || 'cash').toLowerCase();
             const status = (data.status || 'pending').toLowerCase();
-            const addr = data.address || {};
-            const street = addr.street || "";
-            const ward = addr.ward || "";
-            const district = addr.district || "";
-            const city = addr.city || "";
+            //const addr = data.address || {};
+            const street = data.street || "";
+            const ward = data.ward || "";
+            const district = data.district || "";
+            const city = data.city || "";
 
             const queryOrder = `
                 INSERT INTO app.orders 
@@ -44,13 +44,44 @@ class Order {
 
             await client.query(queryOrder, valuesOrder);
 
-            const queryDetail = `
+            /*const queryDetail = `
                 INSERT INTO order_line (order_id, product_id, quantity, price)
                 VALUES ($1, $2, $3, $4)
             `;
 
             for (let item of data.items) {
                 await client.query(queryDetail, [data.id, item.id, item.qty, item.price]);
+            }*/
+
+            // 4. INSERT VÀO BẢNG ORDER_LINE (ĐÃ SỬA: INSERT 1 LẦN DUY NHẤT)
+            if (data.items && data.items.length > 0) {
+                const lineValues = [];
+                const placeholders = [];
+                
+                data.items.forEach((item, index) => {
+                    const i = index * 4; // Mỗi dòng có 4 tham số (order_id, product_id, quantity, price)
+                    
+                    // Tạo chuỗi placeholders: ($1, $2, $3, $4), ($5, $6, $7, $8)...
+                    placeholders.push(`($${i + 1}, $${i + 2}, $${i + 3}, $${i + 4})`);
+                    
+                    // Đẩy dữ liệu phẳng vào mảng values
+                    lineValues.push(
+                        data.id,    // order_id
+                        item.id,    // product_id
+                        item.qty,   // quantity
+                        item.price  // price
+                    );
+                });
+
+                // Câu lệnh SQL cuối cùng sẽ có dạng: 
+                // INSERT INTO ... VALUES ($1, $2, $3, $4), ($5, $6, $7, $8) ...
+                const queryDetail = `
+                    INSERT INTO app.order_line (order_id, product_id, quantity, price)
+                    VALUES ${placeholders.join(', ')}
+                `;
+
+                // Thực thi 1 lần duy nhất
+                await client.query(queryDetail, lineValues);
             }
 
             await client.query('COMMIT');
