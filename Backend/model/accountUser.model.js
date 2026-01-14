@@ -24,11 +24,12 @@ class Account {
     static async findByEmail(email) {
         try {
             // Join bảng user_account để lấy thông tin đăng nhập
+            //RQ2: Soft Delete User and Partial Index
             const query = `
-                SELECT user_id as id, email, password, role, 
+                SELECT ua.user_id as id, email, password, role, 
                        CONCAT(first_name, ' ', last_name) as fullname 
                 FROM user_account ua
-                JOIN employee e ON ua.user_id = e.user_id
+                JOIN customer c ON ua.user_id = c.user_id
                 WHERE ua.email = $1`;
             const result = await pool.query(query, [email]);
             
@@ -92,6 +93,16 @@ class Account {
                 JOIN employee e ON ua.user_id = e.user_id
                 WHERE ua.user_id = $1
             `;
+            /*const query = `
+                SELECT user_id, email, phone,
+                        CONCAT(first_name, ' ', last_name) as fullname,
+                        CONCAT(address_detail, ', ', address_ward, ', ',)
+                        CONCAT(ua.first_name, ' ', ua.last_name)
+                        position as department, phone
+                FROM app.v_employee_profile
+                WHERE email = $1
+                AND deleted_at IS NULL
+            `;*/ //đg làm dở
             const result = await pool.query(query, [id]);
             if (result.rows.length === 0) return null;
             return result.rows[0];
