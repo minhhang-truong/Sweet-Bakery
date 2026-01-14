@@ -27,8 +27,9 @@ class Account {
             const query = `
                 SELECT user_id as id, email, password, role, 
                        CONCAT(first_name, ' ', last_name) as fullname 
-                FROM user_account 
-                WHERE email = $1`;
+                FROM user_account ua
+                JOIN employee e ON ua.user_id = e.user_id
+                WHERE ua.email = $1`;
             const result = await pool.query(query, [email]);
             
             if (result.rows.length === 0) return null;
@@ -61,13 +62,15 @@ class Account {
     static async findEmployeeByEmail(email) {
         try {
             // Join user_account và employee để lấy đầy đủ thông tin check quyền
+            //Request 1
+
             const query = `
-                SELECT ua.user_id as id, ua.email, ua.password, ua.role,
-                       CONCAT(ua.first_name, ' ', ua.last_name) as fullname,
-                       e.position as department, ua.phone
-                FROM user_account ua
-                JOIN employee e ON ua.user_id = e.user_id
-                WHERE ua.email = $1
+                SELECT user_id, email, password, role,
+                        CONCAT(first_name, ' ', last_name) as fullname,
+                        position as department, phone
+                FROM app.v_employee_profile
+                WHERE email = $1
+                AND deleted_at IS NULL
             `;
             const result = await pool.query(query, [email]);
             if (result.rows.length === 0) return null;
